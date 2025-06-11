@@ -168,9 +168,11 @@ export class PerformanceManager {
     this.renderer.setPixelRatio(pixelRatio);
     
     // Adjust shadow quality
-    if (this.renderer.shadowMap.enabled) {
+    if (this.renderer.shadowMap && this.renderer.shadowMap.enabled) {
       const shadowMapSize = Math.floor(1024 * this.adaptiveQualityLevel);
-      this.renderer.shadowMap.setSize(shadowMapSize, shadowMapSize);
+      // Update shadow map size by recreating it if needed
+      // Note: Three.js shadowMap doesn't have setSize method, this would need custom implementation
+      // For now, we'll skip this optimization to prevent errors
     }
     
     // Adjust LOD distances based on quality

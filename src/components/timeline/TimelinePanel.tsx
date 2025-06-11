@@ -33,8 +33,6 @@ interface AnimationTrack {
 }
 
 interface TimelinePanelProps {
-  duration: number;
-  currentTime: number;
   onTimeChange: (time: number) => void;
   onPlay: () => void;
   onPause: () => void;
@@ -42,14 +40,14 @@ interface TimelinePanelProps {
 }
 
 const TimelinePanel: React.FC<TimelinePanelProps> = ({
-  duration,
-  currentTime,
   onTimeChange,
   onPlay,
   onPause,
   onStop
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(10); // Default 10 seconds
+  const [currentTime, setCurrentTime] = useState(0);
   const [tracks, setTracks] = useState<AnimationTrack[]>([]);
   const [selectedKeyframes, setSelectedKeyframes] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(1);
@@ -78,6 +76,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const handleStop = () => {
     onStop();
     setIsPlaying(false);
+    setCurrentTime(0);
     onTimeChange(0);
   };
 
@@ -87,7 +86,9 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
     const rect = timelineRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left + scrollLeft;
     const time = x / pixelsPerSecond;
-    onTimeChange(Math.max(0, Math.min(duration, time)));
+    const newTime = Math.max(0, Math.min(duration, time));
+    setCurrentTime(newTime);
+    onTimeChange(newTime);
   };
 
   const handleKeyframeDrag = (keyframeId: string, startX: number, startTime: number) => {
@@ -109,6 +110,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
 
     if (dragState.dragType === 'playhead') {
       const newTime = Math.max(0, Math.min(duration, dragState.startTime + deltaTime));
+      setCurrentTime(newTime);
       onTimeChange(newTime);
     } else if (dragState.dragType === 'keyframe') {
       // Update keyframe position
@@ -248,7 +250,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => onTimeChange(0)}
+            onClick={() => { setCurrentTime(0); onTimeChange(0); }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
           >
             <SkipBack className="w-4 h-4" />
@@ -269,7 +271,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           </button>
           
           <button
-            onClick={() => onTimeChange(duration)}
+            onClick={() => { setCurrentTime(duration); onTimeChange(duration); }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
           >
             <SkipForward className="w-4 h-4" />

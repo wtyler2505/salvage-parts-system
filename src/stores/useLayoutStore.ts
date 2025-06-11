@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { nanoid } from 'nanoid';
+import { LayoutConfig } from 'golden-layout';
 
 interface Panel {
   id: string;
@@ -14,27 +16,29 @@ interface Panel {
 interface Workspace {
   id: string;
   name: string;
-  layout: any;
+  layout: LayoutConfig;
   panels: Panel[];
-  createdAt: Date;
+  createdAt: number;
 }
 
 interface LayoutStore {
   layout: any;
+  currentLayoutState: LayoutConfig;
   theme: 'light' | 'dark';
   accentColor: string;
   shortcuts: Record<string, string>;
   workspaces: Workspace[];
-  currentWorkspace: string;
+  currentWorkspaceId: string;
   popoutWindows: Window[];
   
   // Actions
   updateLayout: (layout: any) => void;
+  setCurrentLayoutState: (layoutState: LayoutConfig) => void;
   setTheme: (theme: 'light' | 'dark') => void;
   setAccentColor: (color: string) => void;
   updateShortcuts: (shortcuts: Record<string, string>) => void;
-  saveWorkspace: (name: string) => void;
-  loadWorkspace: (id: string) => void;
+  saveWorkspace: (name?: string) => void;
+  loadWorkspace: (workspaceId: string) => void;
   deleteWorkspace: (id: string) => void;
   createPopoutWindow: (panel: any) => void;
   closePopoutWindow: (window: Window) => void;
@@ -118,6 +122,7 @@ const defaultShortcuts = {
 export const useLayoutStore = create<LayoutStore>()(
   immer((set, get) => ({
     layout: defaultLayout,
+    currentLayoutState: defaultLayout,
     theme: 'light',
     accentColor: '#3B82F6',
     shortcuts: defaultShortcuts,
@@ -127,15 +132,21 @@ export const useLayoutStore = create<LayoutStore>()(
         name: 'Default',
         layout: defaultLayout,
         panels: [],
-        createdAt: new Date()
+        createdAt: Date.now()
       }
     ],
-    currentWorkspace: 'default',
+    currentWorkspaceId: 'default',
     popoutWindows: [],
 
     updateLayout: (layout) => {
       set(state => {
         state.layout = layout;
+      });
+    },
+
+    setCurrentLayoutState: (layoutState) => {
+      set(state => {
+        state.currentLayoutState = layoutState;
       });
     },
 
@@ -170,45 +181,50 @@ export const useLayoutStore = create<LayoutStore>()(
     },
 
     saveWorkspace: (name) => {
-      const { layout, currentWorkspace } = get();
-      const workspace: Workspace = {
-        id: name.toLowerCase().replace(/\s+/g, '_'),
-        name,
-        layout,
+      // If no name provided, prompt the user
+      const workspaceName = name || window.prompt('Enter workspace name:');
+      if (!workspaceName) return;
+      
+      const { currentLayoutState } = get();
+      
+      const newWorkspace: Workspace = {
+        id: nanoid(),
+        name: workspaceName,
+        layout: currentLayoutState,
         panels: [],
-        createdAt: new Date()
+        createdAt: Date.now()
       };
 
       set(state => {
-        const existingIndex = state.workspaces.findIndex(w => w.id === workspace.id);
+        const existingIndex = state.workspaces.findIndex(w => w.name === workspaceName);
         if (existingIndex >= 0) {
-          state.workspaces[existingIndex] = workspace;
+          state.workspaces[existingIndex] = newWorkspace;
         } else {
-          state.workspaces.push(workspace);
+          state.workspaces.push(newWorkspace);
         }
-        state.currentWorkspace = workspace.id;
+        state.currentWorkspaceId = newWorkspace.id;
       });
 
       localStorage.setItem('workspaces', JSON.stringify(get().workspaces));
     },
 
-    loadWorkspace: (id) => {
-      const workspace = get().workspaces.find(w => w.id === id);
+    loadWorkspace: (workspaceId) => {
+      const workspace = get().workspaces.find(w => w.id === workspaceId);
       if (workspace) {
         set(state => {
           state.layout = workspace.layout;
-          state.currentWorkspace = id;
+          state.currentWorkspaceId = workspaceId;
         });
       }
     },
 
-    deleteWorkspace: (id) => {
-      if (id === 'default') return; // Can't delete default workspace
+    deleteWorkspace: (workspaceId) => {
+      if (workspaceId === 'default') return; // Can't delete default workspace
 
       set(state => {
-        state.workspaces = state.workspaces.filter(w => w.id !== id);
-        if (state.currentWorkspace === id) {
-          state.currentWorkspace = 'default';
+        state.workspaces = state.workspaces.filter(w => w.id !== workspaceId);
+        if (state.currentWorkspaceId === workspaceId) {
+          state.currentWorkspaceId = 'default';
           state.layout = defaultLayout;
         }
       });
@@ -265,7 +281,7 @@ export const useLayoutStore = create<LayoutStore>()(
 
       set(state => {
         // Add to current workspace
-        const workspace = state.workspaces.find(w => w.id === state.currentWorkspace);
+        const workspace = state.workspaces.find(w => w.id === state.currentWorkspaceId);
         if (workspace) {
           workspace.panels.push(newPanel);
         }
@@ -274,7 +290,7 @@ export const useLayoutStore = create<LayoutStore>()(
 
     removePanel: (id) => {
       set(state => {
-        const workspace = state.workspaces.find(w => w.id === state.currentWorkspace);
+        const workspace = state.workspaces.find(w => w.id === state.currentWorkspaceId);
         if (workspace) {
           workspace.panels = workspace.panels.filter(p => p.id !== id);
         }
@@ -283,7 +299,7 @@ export const useLayoutStore = create<LayoutStore>()(
 
     updatePanel: (id, updates) => {
       set(state => {
-        const workspace = state.workspaces.find(w => w.id === state.currentWorkspace);
+        const workspace = state.workspaces.find(w => w.id === state.currentWorkspaceId);
         if (workspace) {
           const panel = workspace.panels.find(p => p.id === id);
           if (panel) {
@@ -319,9 +335,24 @@ if (savedShortcuts) {
   useLayoutStore.getState().updateShortcuts(JSON.parse(savedShortcuts));
 }
 
-if (savedWorkspaces) {
-  useLayoutStore.setState(state => ({
-    ...state,
-    workspaces: JSON.parse(savedWorkspaces)
-  }));
+try {
+  if (savedWorkspaces) {
+    const parsedWorkspaces = JSON.parse(savedWorkspaces);
+    useLayoutStore.setState({ workspaces: parsedWorkspaces });
+  }
+} catch (error) {
+  console.error('Failed to load saved workspaces:', error);
+  localStorage.removeItem('workspaces');
 }
+
+// Save on changes
+useLayoutStore.subscribe(
+  (state) => state.workspaces,
+  (workspaces) => {
+    try {
+      localStorage.setItem('workspaces', JSON.stringify(workspaces));
+    } catch (error) {
+      console.error('Failed to save workspaces:', error);
+    }
+  }
+);
