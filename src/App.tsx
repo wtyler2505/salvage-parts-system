@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Package, Eye, Settings, Layout as LayoutIcon, Save, Undo, Redo } from 'lucide-react';
+import { Package, Eye, Settings, Layout as LayoutIcon, Save, Undo, Redo, MessageSquare } from 'lucide-react';
 import DockableLayout from './components/layout/DockableLayout';
 import PartLibraryPanel from './components/panels/PartLibraryPanel';
 import PropertyPanel from './components/panels/PropertyPanel';
@@ -289,5 +289,3 @@ function App() {
 }
 
 export default App;
-
-export default App
