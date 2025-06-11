@@ -1255,11 +1255,3 @@ const SimulationTab: React.FC<{ data: any; onChange: (data: any) => void; readOn
 };
 
 export default PartEditor;
-
-export default PartEditor
-
-export default PartEditor
-
-export default PartEditor
-
-export default PartEditor
