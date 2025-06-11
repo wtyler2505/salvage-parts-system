@@ -1,13 +1,15 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Grid, Environment, Stats } from '@react-three/drei';
-import { Physics } from '@react-three/rapier';
+import { OrbitControls, Grid, Environment, Stats, Plane } from '@react-three/drei';
+import { Physics, Debug } from '@react-three/rapier';
 import { EffectComposer, Bloom, SSAO } from '@react-three/postprocessing';
 import { useViewerStore } from '../../stores/useViewerStore';
+import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
 import PartModel from './PartModel';
 import ViewportControls from './ViewportControls';
 import SelectionOutline from './SelectionOutline';
 import { AnnotationSystem } from '../collaboration/AnnotationSystem';
+import MeasurementSystem from '../ui/MeasurementSystem';
 
 const Scene: React.FC = () => {
   const {
@@ -16,8 +18,10 @@ const Scene: React.FC = () => {
     cameraState,
     isAddingAnnotation,
     addAnnotation,
-    setIsAddingAnnotation
+    setIsAddingAnnotation,
+    showMeasurements
   } = useViewerStore();
+  const { parts } = useSalvagePartStore();
 
   const handleSceneClick = (event: any) => {
     if (!isAddingAnnotation) return;
@@ -89,7 +93,8 @@ const Scene: React.FC = () => {
           {/* Physics World */}
           <Physics 
             enabled={simulationSettings.physics.enabled} 
-            gravity={simulationSettings.physics.gravity}
+            gravity={[0, simulationSettings.physics.gravity[1], 0]}
+            timeStep={simulationSettings.physics.timeStep}
             onClick={handleSceneClick}
           >
             {/* Sample Parts - In a real app, these would be loaded dynamically */}
@@ -97,16 +102,39 @@ const Scene: React.FC = () => {
               partId="engine-block-v8"
               position={[0, 2, 0]}
               scale={0.01}
+              mass={10}
+              collisionShape="box"
             />
             <PartModel 
               partId="transmission-assembly"
               position={[3, 1, 0]}
               scale={0.01}
+              mass={5}
+              collisionShape="cylinder"
             />
             <PartModel 
               partId="ecu-control-module"
               position={[-2, 1, 2]}
               scale={0.1}
+              mass={0.5}
+              collisionShape="box"
+            />
+            
+            {/* Ground plane with physics */}
+            <RigidBody type="fixed" position={[0, -0.5, 0]} restitution={0.2} friction={0.7}>
+              <Plane args={[20, 20]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+                <meshStandardMaterial color="#f0f0f0" />
+              </Plane>
+            </RigidBody>
+            
+            {/* Debug visualization for physics if enabled */}
+            {simulationSettings.physics.showDebug && (
+              <Debug />
+            )}
+            
+            {/* Measurement System */}
+            {showMeasurements && (
+              <MeasurementSystem />
             />
           </Physics>
 
@@ -149,6 +177,7 @@ const Scene: React.FC = () => {
           <Stats />
         </Suspense>
       </Canvas>
+      
     </div>
   );
 };

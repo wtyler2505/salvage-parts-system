@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { CameraState, SelectionState, ViewMode, SimulationSettings, LODSettings } from '../types';
+import { CameraState, SelectionState, ViewMode, SimulationSettings, LODSettings, Measurement } from '../types';
 import * as THREE from 'three';
 
 interface Annotation {
@@ -26,6 +26,9 @@ interface ViewerStore {
   explodeFactor: number;
   annotations: Annotation[];
   isAddingAnnotation: boolean;
+  measurements: Measurement[];
+  currentMeasurementPoints: THREE.Vector3[];
+  isMeasuring: boolean;
   
   // Actions
   setCameraState: (state: Partial<CameraState>) => void;
@@ -43,6 +46,10 @@ interface ViewerStore {
   updateAnnotation: (id: string, text: string) => void;
   deleteAnnotation: (id: string) => void;
   setIsAddingAnnotation: (isAdding: boolean) => void;
+  setIsMeasuring: (isMeasuring: boolean) => void;
+  addMeasurementPoint: (point: THREE.Vector3) => void;
+  deleteMeasurement: (id: string) => void;
+  clearMeasurements: () => void;
 }
 
 export const useViewerStore = create<ViewerStore>()(
@@ -67,6 +74,7 @@ export const useViewerStore = create<ViewerStore>()(
     simulationSettings: {
       physics: {
         enabled: false,
+        showDebug: false,
         gravity: [0, -9.81, 0],
         timeStep: 1/60
       },
@@ -93,6 +101,9 @@ export const useViewerStore = create<ViewerStore>()(
     explodeFactor: 1.5,
     annotations: [],
     isAddingAnnotation: false,
+    measurements: [],
+    currentMeasurementPoints: [],
+    isMeasuring: false,
 
     setCameraState: (state) => {
       set(draft => {
@@ -202,6 +213,55 @@ export const useViewerStore = create<ViewerStore>()(
     setIsAddingAnnotation: (isAdding) => {
       set(draft => {
         draft.isAddingAnnotation = isAdding;
+      });
+    },
+    
+    setIsMeasuring: (isMeasuring) => {
+      set(draft => {
+        draft.isMeasuring = isMeasuring;
+        // Clear current measurement points when toggling off
+        if (!isMeasuring) {
+          draft.currentMeasurementPoints = [];
+        }
+      });
+    },
+    
+    addMeasurementPoint: (point) => {
+      set(draft => {
+        // Add point to current measurement points
+        draft.currentMeasurementPoints.push(point);
+        
+        // If we have 2 points, create a measurement
+        if (draft.currentMeasurementPoints.length === 2) {
+          const startPoint = draft.currentMeasurementPoints[0];
+          const endPoint = draft.currentMeasurementPoints[1];
+          
+          // Calculate distance
+          const distance = startPoint.distanceTo(endPoint);
+          
+          // Create measurement
+          draft.measurements.push({
+            id: crypto.randomUUID(),
+            startPoint,
+            endPoint,
+            distance
+          });
+          
+          // Clear current measurement points
+          draft.currentMeasurementPoints = [];
+        }
+      });
+    },
+    
+    deleteMeasurement: (id) => {
+      set(draft => {
+        draft.measurements = draft.measurements.filter(m => m.id !== id);
+      });
+    },
+    
+    clearMeasurements: () => {
+      set(draft => {
+        draft.measurements = [];
       });
     }
   }))

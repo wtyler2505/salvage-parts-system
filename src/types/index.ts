@@ -54,6 +54,7 @@ export interface SelectionState {
 export interface SimulationSettings {
   physics: {
     enabled: boolean;
+    showDebug?: boolean;
     gravity: [number, number, number];
     timeStep: number;
   };
@@ -67,6 +68,13 @@ export interface SimulationSettings {
     ambientTemperature: number;
     showHeatMap: boolean;
   };
+}
+
+export interface Measurement {
+  id: string;
+  startPoint: THREE.Vector3;
+  endPoint: THREE.Vector3;
+  distance: number;
 }
 
 export interface LODSettings {

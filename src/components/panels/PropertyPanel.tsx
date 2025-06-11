@@ -12,10 +12,12 @@ import {
   Settings,
   Zap,
   Thermometer,
-  Wrench
+  Wrench,
+  Magnet
 } from 'lucide-react';
 import { SalvagePart } from '../../types/salvagePart';
 import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { useViewerStore } from '../../stores/useViewerStore';
 
 interface PropertyPanelProps {
   part: SalvagePart | null;
@@ -32,6 +34,7 @@ interface Section {
 
 const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => {
   const { updatePart } = useSalvagePartStore();
+  const { simulationSettings, updateSimulationSettings } = useViewerStore();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['general']));
   const [editingField, setEditingField] = useState<string | null>(null);
   const [localValues, setLocalValues] = useState<Record<string, any>>({});
@@ -42,7 +45,8 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
     { id: 'specifications', title: 'Specifications', icon: Settings, collapsible: true },
     { id: 'model', title: '3D Model', icon: Layers, collapsible: true },
     { id: 'physics', title: 'Physics', icon: Wrench, collapsible: true },
-    { id: 'electrical', title: 'Electrical', icon: Zap, collapsible: true },
+    { id: 'simulation', title: 'Simulation', icon: Magnet, collapsible: true },
+    { id: 'electrical', title: 'Electrical', icon: Zap, collapsible: true }, 
     { id: 'thermal', title: 'Thermal', icon: Thermometer, collapsible: true }
   ];
 
@@ -52,6 +56,13 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
         name: part.metadata.name,
         manufacturer: part.metadata.manufacturer,
         model: part.metadata.model,
+        // Physics properties
+        mass: part.simulation?.physics?.mass || 1,
+        friction: part.simulation?.physics?.friction || 0.5,
+        restitution: part.simulation?.physics?.restitution || 0.2,
+        density: part.simulation?.physics?.density || 1000,
+        collisionShape: part.simulation?.physics?.collisionShape || 'box',
+        // Other properties
         ...part.specifications.custom
       });
       
@@ -87,6 +98,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
     const value = localValues[fieldId];
     const updates: Partial<SalvagePart> = {};
 
+    console.log(`Saving field ${fieldId} with value ${value}`);
     // Map field to part structure
     switch (fieldId) {
       case 'name':
@@ -98,6 +110,37 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
       case 'model':
         updates.metadata = { ...part.metadata, model: value };
         break;
+      case 'mass':
+        updates.simulation = {
+          ...part.simulation,
+          physics: { ...part.simulation.physics, mass: parseFloat(value) }
+        };
+        break;
+      case 'friction':
+        updates.simulation = {
+          ...part.simulation,
+          physics: { ...part.simulation.physics, friction: parseFloat(value) }
+        };
+        break;
+      case 'restitution':
+        updates.simulation = {
+          ...part.simulation,
+          physics: { ...part.simulation.physics, restitution: parseFloat(value) }
+        };
+        break;
+      case 'density':
+        updates.simulation = {
+          ...part.simulation,
+          physics: { ...part.simulation.physics, density: parseFloat(value) }
+        };
+        break;
+      case 'collisionShape':
+        updates.simulation = {
+          ...part.simulation,
+          physics: { ...part.simulation.physics, collisionShape: value }
+        };
+        break;
+        
       default:
         // Custom specification field
         updates.specifications = {
@@ -106,6 +149,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
         };
     }
 
+    console.log('Updates:', updates);
     try {
       await updatePart(part.id, updates);
       setEditingField(null);
@@ -113,6 +157,17 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
     } catch (error) {
       console.error('Failed to update part:', error);
     }
+  };
+  
+  const handleSimulationToggle = (type: 'physics' | 'electrical' | 'thermal', enabled: boolean) => {
+    updateSimulationSettings({
+      [type]: {
+        ...simulationSettings[type],
+        enabled
+      }
+    });
+    
+    console.log(`${type} simulation ${enabled ? 'enabled' : 'disabled'}`);
   };
 
   const addCustomField = () => {
@@ -125,6 +180,15 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
     setCustomFields(prev => prev.filter((_, i) => i !== index));
   };
 
+  const SelectInput: React.FC<{ 
+    field: string; 
+    label: string; 
+    value: any; 
+    options: Array<{ value: string; label: string }>;
+    onChange?: (value: string) => void;
+  }> = ({ field, label, value, options, onChange }) => {
+    const isEditing = editingField === field;
+    
   const TextInput: React.FC<{ 
     field: string; 
     label: string; 
@@ -177,7 +241,82 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
     );
   };
 
-  const SelectInput: React.FC<{ 
+  const SelectInputOld: React.FC<{ 
+    field: string; 
+    label: string; 
+    value: any; 
+    options: Array<{ value: string; label: string }>;
+  }> = ({ field, label, value, options }) => (
+    <div className="space-y-1">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+      </label>
+      {isEditing ? (
+        <div className="flex items-center space-x-2">
+          <select
+            value={localValues[field] || ''}
+            onChange={(e) => {
+              handleFieldEdit(field, e.target.value);
+              onChange?.(e.target.value);
+            }}
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {options.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => saveField(field)}
+            className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900 rounded"
+          >
+            <Save className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setEditingField(null)}
+            className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <div
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between group"
+          onClick={() => setEditingField(field)}
+        >
+          <span className={value ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
+            {value ? options.find(o => o.value === value)?.label || value : 'Click to select'}
+          </span>
+          <Edit3 className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      )}
+    </div>
+  );
+
+  const ToggleInput: React.FC<{ 
+    label: string; 
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+  }> = ({ label, checked, onChange }) => (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+      <button
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-5 w-10 items-center rounded-full ${
+          checked ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+            checked ? 'translate-x-5' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  );
+
+  const SelectInputOld2: React.FC<{ 
     field: string; 
     label: string; 
     value: any; 
@@ -393,6 +532,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
                   </div>
                 )}
 
+                {/* Physics Properties */}
                 {section.id === 'physics' && (
                   <div className="space-y-4">
                     <TextInput
@@ -400,6 +540,12 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
                       label="Mass (kg)"
                       value={part.simulation.physics.mass}
                       type="number"
+                    />
+                    <SelectInput
+                      field="collisionShape"
+                      label="Collision Shape"
+                      value={part.simulation.physics.collisionShape}
+                      options={[{ value: 'box', label: 'Box' }, { value: 'sphere', label: 'Sphere' }, { value: 'cylinder', label: 'Cylinder' }, { value: 'mesh', label: 'Mesh' }]}
                     />
                     <TextInput
                       field="density"
@@ -412,6 +558,33 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
                       label="Friction Coefficient"
                       value={part.simulation.physics.friction}
                       type="number"
+                    />
+                    <TextInput
+                      field="restitution"
+                      label="Restitution (Bounciness)"
+                      value={part.simulation.physics.restitution || 0.2}
+                      type="number"
+                    />
+                  </div>
+                )}
+                
+                {/* Simulation Controls */}
+                {section.id === 'simulation' && (
+                  <div className="space-y-4">
+                    <ToggleInput
+                      label="Physics Simulation"
+                      checked={simulationSettings.physics.enabled}
+                      onChange={(checked) => handleSimulationToggle('physics', checked)}
+                    />
+                    <ToggleInput
+                      label="Electrical Simulation"
+                      checked={simulationSettings.electrical.enabled}
+                      onChange={(checked) => handleSimulationToggle('electrical', checked)}
+                    />
+                    <ToggleInput
+                      label="Thermal Simulation"
+                      checked={simulationSettings.thermal.enabled}
+                      onChange={(checked) => handleSimulationToggle('thermal', checked)}
                     />
                   </div>
                 )}

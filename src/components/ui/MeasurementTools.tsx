@@ -1,10 +1,17 @@
 import React from 'react';
-import { Ruler, Move, RotateCcw, Maximize } from 'lucide-react';
+import { Ruler, Move, RotateCcw, Maximize, Trash2 } from 'lucide-react';
 import { useViewerStore } from '../../stores/useViewerStore';
 
 const MeasurementTools: React.FC = () => {
-  const { showMeasurements, toggleMeasurements } = useViewerStore();
-  const [activetool, setActiveTool] = React.useState<string | null>(null);
+  const { 
+    showMeasurements, 
+    toggleMeasurements, 
+    isMeasuring, 
+    setIsMeasuring,
+    clearMeasurements,
+    measurements
+  } = useViewerStore();
+  const [activeTool, setActiveTool] = React.useState<string | null>(null);
 
   const tools = [
     { id: 'distance', name: 'Distance', icon: Ruler },
@@ -16,7 +23,7 @@ const MeasurementTools: React.FC = () => {
   return (
     <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-2">
       <div className="flex items-center space-x-1">
-        {/* Measurement Toggle */}
+        {/* Measurement Toggle Button */}
         <button
           onClick={toggleMeasurements}
           className={`p-2 rounded-lg transition-all duration-200 ${
@@ -29,6 +36,17 @@ const MeasurementTools: React.FC = () => {
           <Ruler className="w-5 h-5" />
         </button>
 
+        {/* Clear Measurements Button */}
+        {measurements.length > 0 && (
+          <button
+            onClick={clearMeasurements}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
+            title="Clear All Measurements"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        )}
+
         {showMeasurements && (
           <>
             {/* Separator */}
@@ -37,12 +55,12 @@ const MeasurementTools: React.FC = () => {
             {/* Measurement Tools */}
             {tools.map(tool => {
               const Icon = tool.icon;
-              const isActive = activetool === tool.id;
+              const isActive = tool.id === 'distance' ? isMeasuring : activeTool === tool.id;
               
               return (
                 <button
                   key={tool.id}
-                  onClick={() => setActiveTool(isActive ? null : tool.id)}
+                  onClick={() => tool.id === 'distance' ? setIsMeasuring(!isActive) : setActiveTool(isActive ? null : tool.id)}
                   className={`p-2 rounded-lg transition-all duration-200 group relative ${
                     isActive
                       ? 'bg-orange-500 text-white'
@@ -64,13 +82,13 @@ const MeasurementTools: React.FC = () => {
       </div>
 
       {/* Active Tool Info */}
-      {activetool && showMeasurements && (
+      {(activeTool || isMeasuring) && showMeasurements && (
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="text-xs text-gray-600">
-            {activetool === 'distance' && 'Click two points to measure distance'}
-            {activetool === 'move' && 'Drag to move selected parts'}
-            {activetool === 'rotate' && 'Drag to rotate selected parts'}
-            {activetool === 'scale' && 'Drag to scale selected parts'}
+            {(activeTool === 'distance' || isMeasuring) && 'Click two points to measure distance'}
+            {activeTool === 'move' && 'Drag to move selected parts'}
+            {activeTool === 'rotate' && 'Drag to rotate selected parts'}
+            {activeTool === 'scale' && 'Drag to scale selected parts'}
           </div>
         </div>
       )}
