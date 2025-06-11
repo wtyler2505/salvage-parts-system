@@ -7,6 +7,7 @@ import TimelinePanel from './components/timeline/TimelinePanel';
 import { usePartStore } from './stores/usePartStore';
 import { useSalvagePartStore } from './stores/useSalvagePartStore';
 import { useSupabasePartStore } from './stores/useSupabasePartStore';
+import SceneControlsPanel from './components/panels/SceneControlsPanel';
 import { initializeSampleData } from './lib/database';
 import { salvageDb } from './lib/salvageDatabase';
 import PartsManager from './components/parts/PartsManager';
@@ -33,6 +34,7 @@ function App() {
   componentMap.set('PartLibraryPanel', PartLibraryPanel);
   componentMap.set('PropertyPanel', PropertyPanel);
   componentMap.set('TimelinePanel', TimelinePanel);
+  componentMap.set('SceneControlsPanel', SceneControlsPanel);
   
   const panels = [
     { 
@@ -84,6 +86,16 @@ function App() {
       resizable: true,
       minWidth: 250,
       minHeight: 200
+    },
+    { 
+      id: 'scene-controls', 
+      title: 'Scene Controls', 
+      component: SceneControlsPanel,
+      icon: Settings,
+      closable: true,
+      resizable: true,
+      minWidth: 250,
+      minHeight: 200
     }
   ];
   
@@ -120,6 +132,10 @@ function App() {
           content: [{
             type: 'stack',
             content: [
+              {
+                type: 'component',
+                componentName: 'SceneControlsPanel'
+              },
               {
                 type: 'component',
                 componentName: 'PropertyPanel'
