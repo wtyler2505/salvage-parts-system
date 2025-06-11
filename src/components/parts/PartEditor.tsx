@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, Upload, Download, Copy } from 'lucide-react';
 import { SalvagePart } from '../../types/salvagePart';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { usePartStore } from '../../stores/usePartStore';
 
 interface PartEditorProps {
   part?: SalvagePart;
@@ -11,7 +11,7 @@ interface PartEditorProps {
 }
 
 const PartEditor: React.FC<PartEditorProps> = ({ part, isOpen, onClose, mode }) => {
-  const { createPart, updatePart, duplicatePart } = useSalvagePartStore();
+  const { createPart, updatePart, duplicatePart } = usePartStore();
   const [formData, setFormData] = useState<Partial<SalvagePart>>({});
   const [activeTab, setActiveTab] = useState('metadata');
   const [saving, setSaving] = useState(false);
