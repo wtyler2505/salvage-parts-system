@@ -14,6 +14,7 @@ import PartsManager from './components/parts/PartsManager';
 import EnhancedScene from './components/enhanced/EnhancedScene';
 import WorkspaceManager from './components/layout/WorkspaceManager';
 import { useLayoutStore } from './stores/useLayoutStore';
+import TutorialOverlay from './components/onboarding/TutorialOverlay';
 
 function App() {
   const { loadParts } = usePartStore();
@@ -37,70 +38,84 @@ function App() {
   componentMap.set('AnnotationPanel', AnnotationPanel);
   
   const panels = [
-    { 
-      id: 'parts-manager', 
-      title: 'Parts Manager', 
+    {
+      id: 'parts-manager',
+      title: 'Parts Manager',
+      componentName: 'PartsManager',
       component: PartsManager,
+      description: 'Manage all salvage parts in your project.',
       icon: Package,
       closable: false,
       resizable: true,
       minWidth: 300,
       minHeight: 200
     },
-    { 
-      id: 'enhanced-scene', 
-      title: '3D Viewer', 
+    {
+      id: 'enhanced-scene',
+      title: '3D Viewer',
+      componentName: 'EnhancedScene',
       component: EnhancedScene,
+      description: 'Preview and manipulate parts in 3D.',
       icon: Eye,
       closable: false,
       resizable: true,
       minWidth: 400,
       minHeight: 300
     },
-    { 
-      id: 'property-panel', 
-      title: 'Properties', 
+    {
+      id: 'property-panel',
+      title: 'Properties',
+      componentName: 'PropertyPanel',
       component: PropertyPanel,
+      description: 'Edit selected object properties.',
       icon: Settings,
       closable: true,
       resizable: true,
       minWidth: 250,
       minHeight: 200
     },
-    { 
-      id: 'part-library', 
-      title: 'Part Library', 
+    {
+      id: 'part-library',
+      title: 'Part Library',
+      componentName: 'PartLibraryPanel',
       component: PartLibraryPanel,
+      description: 'Browse available parts.',
       icon: Package,
       closable: true,
       resizable: true,
       minWidth: 250,
       minHeight: 200
     },
-    { 
-      id: 'timeline-panel', 
-      title: 'Timeline', 
+    {
+      id: 'timeline-panel',
+      title: 'Timeline',
+      componentName: 'TimelinePanel',
       component: TimelinePanel,
+      description: 'Keyframe editor for animations.',
       icon: LayoutIcon,
       closable: true,
       resizable: true,
       minWidth: 250,
       minHeight: 200
     },
-    { 
-      id: 'scene-controls', 
-      title: 'Scene Controls', 
+    {
+      id: 'scene-controls',
+      title: 'Scene Controls',
+      componentName: 'SceneControlsPanel',
       component: SceneControlsPanel,
+      description: 'Adjust camera and scene settings.',
       icon: Settings,
       closable: true,
       resizable: true,
       minWidth: 250,
       minHeight: 200
     },
-    { 
-      id: 'annotation-panel', 
-      title: 'Annotations', 
+    {
+      id: 'annotation-panel',
+      title: 'Annotations',
+      componentName: 'AnnotationPanel',
       component: AnnotationPanel,
+      description: 'Add notes to your scene.',
       icon: MessageSquare,
       closable: true,
       resizable: true,
@@ -276,13 +291,15 @@ function App() {
           </div>
         )}
         
-        <DockableLayout 
+        <DockableLayout
           panels={panels}
           defaultLayout={layoutConfig}
           componentMap={componentMap}
           fallbackToCustomLayout={true}
           onLayoutChange={setCurrentLayoutState}
         />
+
+        <TutorialOverlay />
       </div>
     </div>
   );

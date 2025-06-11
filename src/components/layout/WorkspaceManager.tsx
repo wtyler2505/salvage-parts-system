@@ -7,12 +7,14 @@ interface WorkspaceManagerProps {
 }
 
 const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ className = '' }) => {
-  const { 
-    workspaces, 
-    currentWorkspaceId, 
-    saveWorkspace, 
-    loadWorkspace, 
-    deleteWorkspace 
+  const {
+    workspaces,
+    currentWorkspaceId,
+    saveWorkspace,
+    loadWorkspace,
+    deleteWorkspace,
+    presetLayouts,
+    loadPresetLayout
   } = useLayoutStore();
   
   const [isCreating, setIsCreating] = useState(false);
@@ -113,7 +115,23 @@ const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ className = '' }) =
           </button>
         </div>
       </div>
-      
+
+      {/* Preset layouts */}
+      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Presets</div>
+        <div className="flex flex-wrap gap-2">
+          {presetLayouts.map(preset => (
+            <button
+              key={preset.id}
+              onClick={() => loadPresetLayout(preset.id)}
+              className="px-2 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            >
+              {preset.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Workspace list */}
       <div className="overflow-auto max-h-64">
         {workspaces.map(workspace => (

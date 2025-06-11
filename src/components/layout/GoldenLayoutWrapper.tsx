@@ -103,6 +103,7 @@ const GoldenLayoutWrapper: React.FC<GoldenLayoutWrapperProps> = ({
           const element = document.createElement('div');
           element.style.width = '100%';
           element.style.height = '100%';
+          container.element.id = `panel-${name}`;
           container.element.appendChild(element);
 
           // Create React root and render component

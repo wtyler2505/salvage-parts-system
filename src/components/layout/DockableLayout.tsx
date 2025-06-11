@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Monitor, Layout as LayoutIcon, Settings, Maximize2, Minimize2, X, MoreHorizontal } from 'lucide-react';
+import * as Tooltip from '@radix-ui/react-tooltip';
 import { useLayoutStore } from '../../stores/useLayoutStore';
 import GoldenLayoutWrapper from './GoldenLayoutWrapper';
 import FallbackLayout from './FallbackLayout';
@@ -7,7 +8,9 @@ import FallbackLayout from './FallbackLayout';
 interface Panel {
   id: string;
   title: string;
+  componentName: string;
   component: React.ComponentType<any>;
+  description?: string;
   icon?: React.ComponentType<any>;
   closable?: boolean;
   resizable?: boolean;
@@ -98,9 +101,9 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
   const handleDrop = (e: React.DragEvent, zoneId: string) => {
     e.preventDefault();
     if (draggedPanel) {
-      // Update layout based on drop zone
       const newLayout = updateLayoutForDrop(draggedPanel, zoneId);
       updateLayout(newLayout);
+      saveWorkspace(currentWorkspace);
     }
   };
 
@@ -116,9 +119,49 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
   };
 
   const updateLayoutForDrop = (panelId: string, zoneId: string) => {
-    // Implement layout update logic based on Golden Layout principles
-    const newLayout = { ...layout };
-    // Complex layout manipulation logic would go here
+    const panel = panels.find(p => p.id === panelId);
+    if (!panel) return layout;
+
+    const componentName = panel.componentName;
+    const newLayout = JSON.parse(JSON.stringify(layout));
+
+    const removeComponent = (node: any) => {
+      if (!node.content) return;
+      node.content = node.content.filter((child: any) => {
+        if (child.type === 'component' && child.componentName === componentName) {
+          return false;
+        }
+        removeComponent(child);
+        return !(child.content && child.content.length === 0);
+      });
+    };
+
+    removeComponent(newLayout.root);
+
+    const newComp = { type: 'component', componentName, title: panel.title };
+
+    switch (zoneId) {
+      case 'left':
+        newLayout.root.content.unshift({ type: 'column', width: 20, content: [newComp] });
+        break;
+      case 'right':
+        newLayout.root.content.push({ type: 'column', width: 20, content: [newComp] });
+        break;
+      case 'top':
+        newLayout.root.content[0].content.unshift(newComp);
+        break;
+      case 'bottom':
+        newLayout.root.content[0].content.push(newComp);
+        break;
+      default:
+        if (newLayout.root.content[1] && newLayout.root.content[1].content[0]) {
+          const stack = newLayout.root.content[1].content[0];
+          if (!Array.isArray(stack.content)) stack.content = [stack.content];
+          stack.content.push(newComp);
+        }
+        break;
+    }
+
     return newLayout;
   };
 
@@ -137,21 +180,36 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
     }
   };
 
-  const PanelHeader: React.FC<{ panel: Panel; onPopout: () => void; onClose: () => void }> = ({ 
-    panel, 
-    onPopout, 
-    onClose 
+  const PanelHeader: React.FC<{ panel: Panel; onPopout: () => void; onClose: () => void }> = ({
+    panel,
+    onPopout,
+    onClose
   }) => (
-    <div 
+    <div
+      id={`panel-${panel.id}-header`}
       className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 cursor-move"
       draggable
       onDragStart={(e) => handlePanelDragStart(panel.id, e)}
       onDragEnd={handlePanelDragEnd}
     >
-      <div className="flex items-center space-x-2">
-        {panel.icon && <panel.icon className="w-4 h-4" />}
-        <span className="text-sm font-medium">{panel.title}</span>
-      </div>
+      <Tooltip.Root delayDuration={300}>
+        <Tooltip.Trigger asChild>
+          <div className="flex items-center space-x-2">
+            {panel.icon && <panel.icon className="w-4 h-4" />}
+            <span className="text-sm font-medium">{panel.title}</span>
+          </div>
+        </Tooltip.Trigger>
+        {panel.description && (
+          <Tooltip.Content
+            side="top"
+            sideOffset={4}
+            className="px-2 py-1 rounded text-xs bg-gray-700 text-white"
+          >
+            {panel.description}
+            <Tooltip.Arrow className="fill-gray-700" />
+          </Tooltip.Content>
+        )}
+      </Tooltip.Root>
       
       <div className="flex items-center space-x-1">
         <button
@@ -194,7 +252,8 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
   );
 
   return (
-    <div className={`h-full w-full ${theme === 'dark' ? 'dark' : ''}`}>
+    <Tooltip.Provider>
+      <div className={`h-full w-full ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="flex items-center space-x-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-1 flex-1">
           {workspaces.map(workspace => (
@@ -237,9 +296,9 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
         </div>
       </div>
       
-      <div className="flex-1 relative">
+      <div className="flex-1 relative" ref={layoutRef}>
         {useGoldenLayout && !layoutError ? (
-          <GoldenLayoutWrapper 
+          <GoldenLayoutWrapper
             config={defaultLayout}
             componentMap={componentMap}
             onLayoutChange={(layout) => {
@@ -250,8 +309,24 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
         ) : (
           <FallbackLayout />
         )}
+
+        {draggedPanel && dropZones.map(zone => (
+          <div
+            key={zone.id}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(e, zone.id)}
+            className={`absolute border-2 border-dashed border-blue-500 opacity-75 pointer-events-none ${
+              zone.position === 'left' ? 'inset-y-0 left-0 w-1/4' :
+              zone.position === 'right' ? 'inset-y-0 right-0 w-1/4' :
+              zone.position === 'top' ? 'inset-x-0 top-0 h-1/4' :
+              zone.position === 'bottom' ? 'inset-x-0 bottom-0 h-1/4' :
+              'inset-1/4'
+            }`}
+          />
+        ))}
       </div>
-    </div>
+      </div>
+    </Tooltip.Provider>
   );
 };
 
