@@ -126,7 +126,8 @@ const GoldenLayoutWrapper: React.FC<GoldenLayoutWrapperProps> = ({
 
       // Handle layout changes
       layout.on('stateChanged', () => {
-        if (onLayoutChange) {
+        // Only save layout if it's fully initialized
+        if (onLayoutChange && layout.isInitialised) {
           onLayoutChange(layout.saveLayout());
         }
       });
