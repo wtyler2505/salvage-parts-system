@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useEffect, useState } from 'react';
+import React, { Suspense, useRef, useEffect, useState, lazy } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment, Stats, Preload } from '@react-three/drei';
 import { Physics, Debug } from '@react-three/rapier';
@@ -22,10 +22,10 @@ import { UndoRedoManager } from '../../lib/undo/UndoRedoManager';
 import { AutoSaveManager } from '../../lib/autosave/AutoSaveManager';
 
 // Import UI components
-import PerformanceOverlay from '../performance/PerformanceOverlay';
+const PerformanceOverlay = lazy(() => import('../performance/PerformanceOverlay'));
 import KonamiCode from '../easter-eggs/KonamiCode';
 import AchievementSystem from '../achievements/AchievementSystem';
-import PartTetris from '../mini-games/PartTetris';
+const PartTetris = lazy(() => import('../mini-games/PartTetris'));
 import MeasurementSystem from '../ui/MeasurementSystem';
 import AnnotationControlPanel from '../ui/AnnotationControlPanel';
 import { AnnotationSystem } from '../collaboration/AnnotationSystem';
@@ -451,11 +451,13 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
 
       {/* Performance Overlay */}
       {performanceManager && (
-        <PerformanceOverlay
-          performanceManager={performanceManager}
-          visible={showPerformanceOverlay}
-          position="top-right"
-        />
+        <Suspense fallback={null}>
+          <PerformanceOverlay
+            performanceManager={performanceManager}
+            visible={showPerformanceOverlay}
+            position="top-right"
+          />
+        </Suspense>
       )}
 
       {/* Easter Eggs */}
@@ -488,7 +490,9 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
 
       {/* Mini-games */}
       {showTetris && (
-        <PartTetris onClose={() => setShowTetris(false)} />
+        <Suspense fallback={<div className="text-white p-4">Loading game...</div>}>
+          <PartTetris onClose={() => setShowTetris(false)} />
+        </Suspense>
       )}
 
       {/* Control Panel */}
