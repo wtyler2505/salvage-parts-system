@@ -9,7 +9,6 @@ import { useSupabasePartStore } from './stores/useSupabasePartStore';
 import SceneControlsPanel from './components/panels/SceneControlsPanel';
 import AnnotationPanel from './components/panels/AnnotationPanel';
 import { initializeSampleData } from './lib/database';
-import { salvageDb } from './lib/salvageDatabase';
 import PartsManager from './components/parts/PartsManager';
 import EnhancedScene from './components/enhanced/EnhancedScene';
 import WorkspaceManager from './components/layout/WorkspaceManager';
