@@ -713,4 +713,549 @@ const SpecificationsTab: React.FC<{ data: any; onChange: (data: any) => void; re
                     min: parseFloat(e.target.value) || 0 
                   })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Max</label>
+                <input
+                  type="number"
+                  value={data.thermal?.operatingTemp?.max || ''}
+                  onChange={(e) => updateSpec('thermal', 'operatingTemp', { 
+                    ...data.thermal?.operatingTemp, 
+                    max: parseFloat(e.target.value) || 0 
+                  })}
+                  disabled={readOnly}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Thermal Resistance (K/W)</label>
+            <input
+              type="number"
+              value={data.thermal?.thermalResistance || ''}
+              onChange={(e) => updateSpec('thermal', 'thermalResistance', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Heat Dissipation (W)</label>
+            <input
+              type="number"
+              value={data.thermal?.heatDissipation || ''}
+              onChange={(e) => updateSpec('thermal', 'heatDissipation', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+        </div>
+      )}
+
+      {activeSpecType === 'custom' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-gray-900">Custom Specifications</h3>
+            {!readOnly && (
+              <button
+                onClick={() => {
+                  const key = prompt('Enter specification name:');
+                  if (key) {
+                    updateSpec('custom', key, '');
+                  }
+                }}
+                className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Specification</span>
+              </button>
+            )}
+          </div>
+          
+          <div className="space-y-3">
+            {Object.entries(data.custom || {}).map(([key, value]) => (
+              <div key={key} className="flex items-center space-x-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{key}</label>
+                  <input
+                    type="text"
+                    value={String(value)}
+                    onChange={(e) => updateSpec('custom', key, e.target.value)}
+                    disabled={readOnly}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                  />
+                </div>
+                {!readOnly && (
+                  <button
+                    onClick={() => {
+                      const newCustom = { ...data.custom };
+                      delete newCustom[key];
+                      onChange({ ...data, custom: newCustom });
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Models Tab Component
+const ModelsTab: React.FC<{ data: any; onChange: (data: any) => void; readOnly: boolean }> = ({ 
+  data, onChange, readOnly 
+}) => {
+  const handleFileUpload = (type: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // In a real implementation, this would upload the file and return a URL
+      const mockUrl = URL.createObjectURL(file);
+      const modelData = {
+        id: crypto.randomUUID(),
+        url: mockUrl,
+        format: file.name.split('.').pop()?.toLowerCase() as any,
+        size: file.size,
+        checksum: 'mock-checksum',
+        metadata: {
+          vertices: 0,
+          faces: 0,
+          materials: [],
+          animations: []
+        }
+      };
+      
+      onChange({
+        ...data,
+        [type]: modelData
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6">
+        {/* Primary Model */}
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Primary Model</h3>
+            {!readOnly && (
+              <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+                <Upload className="w-4 h-4" />
+                <span>Upload Model</span>
+                <input
+                  type="file"
+                  accept=".gltf,.glb,.obj,.stl,.step"
+                  onChange={(e) => handleFileUpload('primary', e)}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+          
+          {data.primary?.url ? (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">Model Loaded</p>
+                  <p className="text-sm text-gray-600">Format: {data.primary.format?.toUpperCase()}</p>
+                  <p className="text-sm text-gray-600">Size: {(data.primary.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+                <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">🎯</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <div className="text-gray-400 mb-2">
+                <Upload className="w-12 h-12 mx-auto" />
+              </div>
+              <p className="text-gray-600">No primary model uploaded</p>
+              <p className="text-sm text-gray-500">Supported formats: GLTF, OBJ, STL, STEP</p>
+            </div>
+          )}
+        </div>
+
+        {/* LOD Models */}
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Level of Detail (LOD) Models</h3>
+            {!readOnly && (
+              <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center space-x-2">
+                <Plus className="w-4 h-4" />
+                <span>Add LOD Level</span>
+              </button>
+            )}
+          </div>
+          
+          <div className="space-y-3">
+            {(data.lods || []).map((lod: any, index: number) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">LOD Level {index + 1}</p>
+                  <p className="text-sm text-gray-600">Format: {lod.format?.toUpperCase()}</p>
+                </div>
+                {!readOnly && (
+                  <button className="text-red-600 hover:bg-red-50 p-2 rounded-lg">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+            
+            {(data.lods || []).length === 0 && (
+              <p className="text-gray-500 text-center py-4">No LOD models configured</p>
+            )}
+          </div>
+        </div>
+
+        {/* Collision Model */}
+        <div className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Collision Model</h3>
+            {!readOnly && (
+              <label className="cursor-pointer bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center space-x-2">
+                <Upload className="w-4 h-4" />
+                <span>Upload Collision</span>
+                <input
+                  type="file"
+                  accept=".gltf,.glb,.obj,.stl"
+                  onChange={(e) => handleFileUpload('collision', e)}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+          
+          {data.collision?.url ? (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="font-medium text-gray-900">Collision Model Loaded</p>
+              <p className="text-sm text-gray-600">Format: {data.collision.format?.toUpperCase()}</p>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No collision model uploaded</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Documentation Tab Component
+const DocumentationTab: React.FC<{ data: any; onChange: (data: any) => void; readOnly: boolean }> = ({ 
+  data, onChange, readOnly 
+}) => {
+  const documentTypes = [
+    { key: 'datasheets', name: 'Datasheets', icon: '📊' },
+    { key: 'manuals', name: 'Manuals', icon: '📖' },
+    { key: 'schematics', name: 'Schematics', icon: '🔌' },
+    { key: 'images', name: 'Images', icon: '🖼️' },
+    { key: 'videos', name: 'Videos', icon: '🎥' }
+  ];
+
+  const addDocument = (type: string, file: File) => {
+    const newDoc = {
+      id: crypto.randomUUID(),
+      name: file.name,
+      type: file.type.startsWith('image/') ? 'image' : file.type === 'application/pdf' ? 'pdf' : 'text',
+      url: URL.createObjectURL(file),
+      size: file.size,
+      uploadDate: new Date(),
+      tags: []
+    };
+
+    onChange({
+      ...data,
+      [type]: [...(data[type] || []), newDoc]
+    });
+  };
+
+  const removeDocument = (type: string, index: number) => {
+    const newDocs = [...(data[type] || [])];
+    newDocs.splice(index, 1);
+    onChange({
+      ...data,
+      [type]: newDocs
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {documentTypes.map(docType => (
+        <div key={docType.key} className="border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center space-x-2">
+              <span className="text-xl">{docType.icon}</span>
+              <span>{docType.name}</span>
+            </h3>
+            {!readOnly && (
+              <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+                <Upload className="w-4 h-4" />
+                <span>Upload</span>
+                <input
+                  type="file"
+                  multiple
+                  accept={docType.key === 'images' ? 'image/*' : docType.key === 'videos' ? 'video/*' : '.pdf,.doc,.docx,.txt'}
+                  onChange={(e) => {
+                    Array.from(e.target.files || []).forEach(file => {
+                      addDocument(docType.key, file);
+                    });
+                  }}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {(data[docType.key] || []).map((doc: any, index: number) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-lg">{docType.icon}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 truncate">{doc.name}</p>
+                    <p className="text-sm text-gray-600">{(doc.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                </div>
+                {!readOnly && (
+                  <button
+                    onClick={() => removeDocument(docType.key, index)}
+                    className="text-red-600 hover:bg-red-50 p-2 rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {(data[docType.key] || []).length === 0 && (
+            <p className="text-gray-500 text-center py-4">No {docType.name.toLowerCase()} uploaded</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Simulation Tab Component
+const SimulationTab: React.FC<{ data: any; onChange: (data: any) => void; readOnly: boolean }> = ({ 
+  data, onChange, readOnly 
+}) => {
+  const updateSimulation = (type: string, field: string, value: any) => {
+    onChange({
+      ...data,
+      [type]: {
+        ...data[type],
+        [field]: value
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Physics Properties */}
+      <div className="border border-gray-200 rounded-lg p-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center space-x-2">
+          <span className="text-xl">⚛️</span>
+          <span>Physics Properties</span>
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mass (kg)</label>
+            <input
+              type="number"
+              value={data.physics?.mass || ''}
+              onChange={(e) => updateSimulation('physics', 'mass', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Density (kg/m³)</label>
+            <input
+              type="number"
+              value={data.physics?.density || ''}
+              onChange={(e) => updateSimulation('physics', 'density', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Friction Coefficient</label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="1"
+              value={data.physics?.friction || ''}
+              onChange={(e) => updateSimulation('physics', 'friction', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Restitution</label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="1"
+              value={data.physics?.restitution || ''}
+              onChange={(e) => updateSimulation('physics', 'restitution', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Collision Shape</label>
+            <select
+              value={data.physics?.collisionShape || 'box'}
+              onChange={(e) => updateSimulation('physics', 'collisionShape', e.target.value)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            >
+              <option value="box">Box</option>
+              <option value="sphere">Sphere</option>
+              <option value="cylinder">Cylinder</option>
+              <option value="mesh">Mesh</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Electrical Properties */}
+      <div className="border border-gray-200 rounded-lg p-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center space-x-2">
+          <span className="text-xl">⚡</span>
+          <span>Electrical Properties</span>
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Conductivity (S/m)</label>
+            <input
+              type="number"
+              value={data.electrical?.conductivity || ''}
+              onChange={(e) => updateSimulation('electrical', 'conductivity', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Resistivity (Ω⋅m)</label>
+            <input
+              type="number"
+              value={data.electrical?.resistivity || ''}
+              onChange={(e) => updateSimulation('electrical', 'resistivity', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Dielectric Constant</label>
+            <input
+              type="number"
+              value={data.electrical?.dielectric || ''}
+              onChange={(e) => updateSimulation('electrical', 'dielectric', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Breakdown Voltage (V)</label>
+            <input
+              type="number"
+              value={data.electrical?.breakdown || ''}
+              onChange={(e) => updateSimulation('electrical', 'breakdown', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Thermal Properties */}
+      <div className="border border-gray-200 rounded-lg p-4">
+        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center space-x-2">
+          <span className="text-xl">🌡️</span>
+          <span>Thermal Properties</span>
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Thermal Conductivity (W/mK)</label>
+            <input
+              type="number"
+              value={data.thermal?.conductivity || ''}
+              onChange={(e) => updateSimulation('thermal', 'conductivity', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Heat Capacity (J/kgK)</label>
+            <input
+              type="number"
+              value={data.thermal?.capacity || ''}
+              onChange={(e) => updateSimulation('thermal', 'capacity', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Thermal Expansion (1/K)</label>
+            <input
+              type="number"
+              value={data.thermal?.expansion || ''}
+              onChange={(e) => updateSimulation('thermal', 'expansion', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Emissivity</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="1"
+              value={data.thermal?.emissivity || ''}
+              onChange={(e) => updateSimulation('thermal', 'emissivity', parseFloat(e.target.value) || 0)}
+              disabled={readOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PartEditor;
+
+export default PartEditor
+
+export default PartEditor
