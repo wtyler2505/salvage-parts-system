@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
-import { supabase, partsApi, SupabasePart } from '../lib/supabaseClient'
+import { partsApi, SupabasePart } from '../lib/supabaseApi'
 
 interface SupabasePartStore {
   parts: SupabasePart[]
