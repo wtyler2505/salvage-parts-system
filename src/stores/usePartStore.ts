@@ -7,6 +7,8 @@ interface PartStore {
   parts: Part[];
   filteredParts: Part[];
   selectedPart: Part | null;
+  favorites: Set<string>;
+  recentPartIds: string[];
   searchFilters: SearchFilters;
   searchQuery: string;
   selectedCategory: string;
@@ -26,6 +28,9 @@ interface PartStore {
   searchParts: (filters: SearchFilters | string) => Promise<void>;
   filterByCategory: (category: string) => void;
   filterByTags: (tags: string[]) => void;
+  filterBySpecialCategory: (category: 'favorites' | 'recent' | null) => void;
+  toggleFavorite: (partId: string) => void;
+  addRecentPart: (partId: string) => void;
   clearFilters: () => void;
   setSelectedPart: (part: Part | null) => void;
   
@@ -46,6 +51,8 @@ export const usePartStore = create<PartStore>()(
     parts: [],
     filteredParts: [],
     selectedPart: null,
+    favorites: new Set(JSON.parse(localStorage.getItem('part-library-favorites') || '[]')),
+    recentPartIds: JSON.parse(localStorage.getItem('part-library-recents') || '[]'),
     searchFilters: {},
     searchQuery: '',
     selectedCategory: '',
@@ -485,6 +492,49 @@ export const usePartStore = create<PartStore>()(
         }
         
         state.filteredParts = filtered;
+      });
+    },
+
+    filterBySpecialCategory: (category) => {
+      set(state => {
+        const { parts, favorites, recentPartIds } = get();
+        
+        if (category === 'favorites') {
+          state.filteredParts = parts.filter(part => favorites.has(part.id));
+        } else if (category === 'recent') {
+          state.filteredParts = parts.filter(part => recentPartIds.includes(part.id));
+        } else {
+          state.filteredParts = parts;
+        }
+      });
+    },
+
+    toggleFavorite: (partId) => {
+      set(state => {
+        const newFavorites = new Set(state.favorites);
+        if (newFavorites.has(partId)) {
+          newFavorites.delete(partId);
+        } else {
+          newFavorites.add(partId);
+        }
+        state.favorites = newFavorites;
+        
+        // Save to localStorage
+        localStorage.setItem('part-library-favorites', JSON.stringify([...newFavorites]));
+      });
+    },
+
+    addRecentPart: (partId) => {
+      set(state => {
+        // Remove the part if it already exists in the recents
+        const filteredRecents = state.recentPartIds.filter(id => id !== partId);
+        
+        // Add the part to the beginning of the array
+        const newRecents = [partId, ...filteredRecents].slice(0, 10); // Keep only 10 most recent
+        state.recentPartIds = newRecents;
+        
+        // Save to localStorage
+        localStorage.setItem('part-library-recents', JSON.stringify(newRecents));
       });
     },
 

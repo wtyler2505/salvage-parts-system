@@ -189,6 +189,55 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
   }> = ({ field, label, value, options, onChange }) => {
     const isEditing = editingField === field;
     
+    return (
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+        </label>
+        {isEditing ? (
+          <div className="flex items-center space-x-2">
+            <select
+              value={localValues[field] || ''}
+              onChange={(e) => {
+                handleFieldEdit(field, e.target.value);
+                onChange?.(e.target.value);
+              }}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {options.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => saveField(field)}
+              className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900 rounded"
+            >
+              <Save className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setEditingField(null)}
+              className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between group"
+            onClick={() => setEditingField(field)}
+          >
+            <span className={value ? 'text-gray-900 dark:text-white' : 'text-gray-500'}>
+              {value ? options.find(o => o.value === value)?.label || value : 'Click to select'}
+            </span>
+            <Edit3 className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        )}
+      </div>
+    );
+  };
+  
   const TextInput: React.FC<{ 
     field: string; 
     label: string; 
