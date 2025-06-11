@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
 import { Package, Eye, Settings, Layout as LayoutIcon, Save, Undo, Redo, MessageSquare } from 'lucide-react';
 import DockableLayout from './components/layout/DockableLayout';
 import PartLibraryPanel from './components/panels/PartLibraryPanel';
@@ -11,7 +11,7 @@ import AnnotationPanel from './components/panels/AnnotationPanel';
 import { initializeSampleData } from './lib/database';
 import { salvageDb } from './lib/salvageDatabase';
 import PartsManager from './components/parts/PartsManager';
-import EnhancedScene from './components/enhanced/EnhancedScene';
+const EnhancedScene = lazy(() => import('./components/enhanced/EnhancedScene'));
 import WorkspaceManager from './components/layout/WorkspaceManager';
 import { useLayoutStore } from './stores/useLayoutStore';
 
@@ -276,13 +276,15 @@ function App() {
           </div>
         )}
         
-        <DockableLayout 
-          panels={panels}
-          defaultLayout={layoutConfig}
-          componentMap={componentMap}
-          fallbackToCustomLayout={true}
-          onLayoutChange={setCurrentLayoutState}
-        />
+        <Suspense fallback={<div className="p-4">Loading viewer...</div>}>
+          <DockableLayout
+            panels={panels}
+            defaultLayout={layoutConfig}
+            componentMap={componentMap}
+            fallbackToCustomLayout={true}
+            onLayoutChange={setCurrentLayoutState}
+          />
+        </Suspense>
       </div>
     </div>
   );
