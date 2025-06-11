@@ -1,7 +1,7 @@
 import React, { Suspense, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment, Stats, Preload } from '@react-three/drei';
-import { Physics } from '@react-three/rapier';
+import { Physics, Debug } from '@react-three/rapier';
 import { 
   EffectComposer, 
   SSAO, 
@@ -26,6 +26,7 @@ import PerformanceOverlay from '../performance/PerformanceOverlay';
 import KonamiCode from '../easter-eggs/KonamiCode';
 import AchievementSystem from '../achievements/AchievementSystem';
 import PartTetris from '../mini-games/PartTetris';
+import MeasurementSystem from '../ui/MeasurementSystem';
 import AnnotationControlPanel from '../ui/AnnotationControlPanel';
 import { AnnotationSystem } from '../collaboration/AnnotationSystem';
 
@@ -103,10 +104,18 @@ const SceneContent: React.FC<{
   performanceManager: PerformanceManager | null;
   enableEffects: boolean;
   useSSAO: boolean;
+  showDebug?: boolean;
+  isMeasuring?: boolean;
 }> = ({ performanceManager, enableEffects, useSSAO }) => {
   const { showGrid, simulationSettings } = useViewerStore();
   const { parts } = useSalvagePartStore();
-  const { isAddingAnnotation, addAnnotation, setIsAddingAnnotation } = useViewerStore();
+  const { 
+    isAddingAnnotation, 
+    addAnnotation, 
+    setIsAddingAnnotation,
+    annotations,
+    isMeasuring, addMeasurementPoint
+  } = useViewerStore();
   const { scene, camera, raycaster, pointer } = useThree();
   
   useFrame((state) => {
@@ -118,7 +127,7 @@ const SceneContent: React.FC<{
   });
   
   const handleClick = (event: THREE.Event) => {
-    if (!isAddingAnnotation) return;
+    if (!isAddingAnnotation && !isMeasuring) return;
     
     // Prevent event from propagating to parent elements
     event.stopPropagation();
@@ -130,12 +139,20 @@ const SceneContent: React.FC<{
     if (intersects.length > 0) {
       const point = intersects[0].point.clone();
       
-      // Add annotation at intersection point
-      addAnnotation({
-        position: point,
-        text: 'New annotation',
-        author: 'User',
-      });
+      if (isAddingAnnotation) {
+        // Add annotation at intersection point
+        addAnnotation({
+          position: point,
+          text: 'New annotation',
+          author: 'User',
+        });
+        
+        // Exit annotation mode
+        setIsAddingAnnotation(false);
+      } else if (isMeasuring) {
+        // Add measurement point
+        addMeasurementPoint(point);
+      }
       
       // Exit annotation mode
       setIsAddingAnnotation(false);
@@ -206,6 +223,9 @@ const SceneContent: React.FC<{
       {/* Annotation System */}
       <AnnotationSystem />
       
+      {/* Measurement System */}
+      <MeasurementSystem />
+      
       {/* Ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
         <planeGeometry args={[20, 20]} />
@@ -249,6 +269,7 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
   const [konamiActivated, setKonamiActivated] = useState(false);
   const [enablePostProcessing, setEnablePostProcessing] = useState(true);
   const [useSSAO, setUseSSAO] = useState(false); // Default to N8AO for better compatibility
+  const [showPhysicsDebug, setShowPhysicsDebug] = useState(false);
 
   // Initialize performance systems
   const initializePerformanceSystems = (gl: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => {
@@ -345,6 +366,15 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
         setUseSSAO(!useSSAO);
       }
       
+      // Toggle physics debug visualization
+      if (e.key === 'F6') {
+        e.preventDefault();
+        setShowPhysicsDebug(!showPhysicsDebug);
+        updateSimulationSettings({
+          physics: { ...simulationSettings.physics, showDebug: !showPhysicsDebug }
+        });
+      }
+      
       // Undo/Redo
       if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -375,6 +405,8 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
       autoSaveManager?.dispose();
     };
   }, [performanceManager, workerPool, autoSaveManager]);
+  
+  const { simulationSettings, updateSimulationSettings } = useViewerStore();
 
   return (
     <div className="relative w-full h-full bg-gray-900">
@@ -400,6 +432,7 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
           <Physics 
             gravity={[0, -9.81, 0]}
             timeStep={1/60}
+            debug={showPhysicsDebug}
           >
             <SceneContent 
               performanceManager={performanceManager}
@@ -483,6 +516,16 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
         >
           AO: {useSSAO ? 'SSAO' : 'N8AO'}
         </button>
+        
+        <button
+          onClick={() => {
+            setShowPhysicsDebug(!showPhysicsDebug);
+            updateSimulationSettings({ physics: { ...simulationSettings.physics, showDebug: !showPhysicsDebug } });
+          }}
+          className={`w-full px-3 py-1 text-xs rounded transition-colors ${showPhysicsDebug ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+        >
+          Physics Debug: {showPhysicsDebug ? 'ON' : 'OFF'}
+        </button>
       </div>
 
       {/* Help overlay */}
@@ -491,6 +534,7 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
           <div><kbd className="bg-gray-700 px-1 rounded">F3</kbd> Performance Overlay</div>
           <div><kbd className="bg-gray-700 px-1 rounded">F4</kbd> Achievements</div>
           <div><kbd className="bg-gray-700 px-1 rounded">F5</kbd> Toggle AO Method</div>
+          <div><kbd className="bg-gray-700 px-1 rounded">F6</kbd> Physics Debug</div>
           <div><kbd className="bg-gray-700 px-1 rounded">Ctrl+Z</kbd> Undo</div>
           <div><kbd className="bg-gray-700 px-1 rounded">Ctrl+Y</kbd> Redo</div>
           <div><kbd className="bg-gray-700 px-1 rounded">Ctrl+S</kbd> Save</div>

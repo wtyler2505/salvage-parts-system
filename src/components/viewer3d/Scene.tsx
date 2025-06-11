@@ -135,6 +135,8 @@ const Scene: React.FC = () => {
             {/* Measurement System */}
             {showMeasurements && (
               <MeasurementSystem />
+            )
+            }
             />
           </Physics>
 

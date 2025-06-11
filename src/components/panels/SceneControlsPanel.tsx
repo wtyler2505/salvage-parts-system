@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Eye, Layers, Maximize, Sparkles, Zap, MessageSquare } from 'lucide-react';
+import { Grid, Eye, Layers, Maximize, Sparkles, Zap, MessageSquare, Magnet, Ruler } from 'lucide-react';
 import { useViewerStore } from '../../stores/useViewerStore';
 
 const SceneControlsPanel = () => {
@@ -8,15 +8,23 @@ const SceneControlsPanel = () => {
     showWireframe, 
     explodedView, 
     explodeFactor,
+    simulationSettings,
     isAddingAnnotation,
+    isMeasuring,
     toggleGrid, 
     toggleWireframe, 
+    toggleMeasurements,
+    setIsMeasuring,
     setExplodedView,
     setIsAddingAnnotation
   } = useViewerStore();
 
   const handleExplodeFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setExplodedView(true, parseFloat(e.target.value));
+  };
+  
+  const handlePhysicsToggle = () => {
+    useViewerStore.setState(state => ({ simulationSettings: { ...state.simulationSettings, physics: { ...state.simulationSettings.physics, enabled: !state.simulationSettings.physics.enabled } } }));
   };
 
   return (
@@ -119,6 +127,92 @@ const SceneControlsPanel = () => {
                   <span>1</span>
                   <span>2</span>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Divider */}
+        <div className="border-t border-gray-200 dark:border-gray-700"></div>
+        
+        {/* Measurements */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+            <Ruler className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+            Measurements
+          </h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Show Measurements</span>
+              <button
+                onClick={toggleMeasurements}
+                className={`relative inline-flex h-5 w-10 items-center rounded-full ${
+                  showMeasurements ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                    showMeasurements ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Measurement Mode</span>
+              <button
+                onClick={() => setIsMeasuring(!isMeasuring)}
+                className={`relative inline-flex h-5 w-10 items-center rounded-full ${
+                  isMeasuring ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                    isMeasuring ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            
+            {isMeasuring && (
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-800 dark:text-blue-300">
+                Click two points on the 3D model to measure the distance between them
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Divider */}
+        <div className="border-t border-gray-200 dark:border-gray-700"></div>
+        
+        {/* Physics Simulation */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+            <Magnet className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+            Physics Simulation
+          </h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Enable Physics</span>
+              <button
+                onClick={handlePhysicsToggle}
+                className={`relative inline-flex h-5 w-10 items-center rounded-full ${
+                  simulationSettings.physics.enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                    simulationSettings.physics.enabled ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            
+            {simulationSettings.physics.enabled && (
+              <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs text-green-800 dark:text-green-300">
+                Physics simulation is active. Objects will respond to gravity and collisions.
               </div>
             )}
           </div>
