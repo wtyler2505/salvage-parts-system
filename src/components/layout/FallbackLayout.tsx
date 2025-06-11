@@ -9,6 +9,7 @@ interface Panel {
   id: string;
   title: string;
   component: React.ComponentType;
+  componentName?: string;
   width: number;
   height: number;
   x: number;
@@ -23,6 +24,7 @@ const FallbackLayout: React.FC = () => {
       id: 'library',
       title: 'Part Library',
       component: PartLibraryPanel,
+      componentName: 'PartLibraryPanel',
       width: 300,
       height: 600,
       x: 0,
@@ -34,6 +36,7 @@ const FallbackLayout: React.FC = () => {
       id: 'viewer',
       title: '3D Viewer',
       component: EnhancedScene,
+      componentName: 'EnhancedScene',
       width: 800,
       height: 600,
       x: 320,
@@ -45,6 +48,7 @@ const FallbackLayout: React.FC = () => {
       id: 'properties',
       title: 'Properties',
       component: PropertyPanel,
+      componentName: 'PropertyPanel',
       width: 300,
       height: 400,
       x: 1140,
@@ -56,6 +60,7 @@ const FallbackLayout: React.FC = () => {
       id: 'manager',
       title: 'Parts Manager',
       component: PartsManager,
+      componentName: 'PartsManager',
       width: 800,
       height: 300,
       x: 320,
@@ -205,8 +210,9 @@ const FallbackLayout: React.FC = () => {
             };
 
         return (
-          <div 
+          <div
             key={panel.id}
+            id={`panel-${panel.componentName || panel.id}`}
             className="absolute bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"
             style={style as React.CSSProperties}
           >

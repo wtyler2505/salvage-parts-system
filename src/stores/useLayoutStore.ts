@@ -29,6 +29,7 @@ interface LayoutStore {
   shortcuts: Record<string, string>;
   workspaces: Workspace[];
   currentWorkspaceId: string;
+  presetLayouts: { id: string; name: string; layout: LayoutConfig }[];
   popoutWindows: Window[];
   
   // Actions
@@ -40,6 +41,7 @@ interface LayoutStore {
   saveWorkspace: (name?: string) => void;
   loadWorkspace: (workspaceId: string) => void;
   deleteWorkspace: (id: string) => void;
+  loadPresetLayout: (id: string) => void;
   createPopoutWindow: (panel: any) => void;
   closePopoutWindow: (window: Window) => void;
   addPanel: (panel: Omit<Panel, 'id'>) => void;
@@ -97,6 +99,43 @@ const defaultLayout = {
   ]
 };
 
+const modelingLayout = defaultLayout;
+
+const simulationLayout: LayoutConfig = {
+  root: {
+    type: 'column',
+    content: [
+      {
+        type: 'row',
+        height: 70,
+        content: [
+          {
+            type: 'component',
+            componentName: 'EnhancedScene',
+            title: '3D Viewer'
+          },
+          {
+            type: 'component',
+            componentName: 'PropertyPanel',
+            title: 'Properties'
+          }
+        ]
+      },
+      {
+        type: 'component',
+        componentName: 'TimelinePanel',
+        title: 'Timeline',
+        height: 30
+      }
+    ]
+  }
+};
+
+export const presetLayouts = [
+  { id: 'modeling', name: 'Modeling', layout: modelingLayout },
+  { id: 'simulation', name: 'Simulation', layout: simulationLayout }
+];
+
 const defaultShortcuts = {
   'Ctrl+S': 'saveWorkspace',
   'Ctrl+Shift+S': 'saveWorkspaceAs',
@@ -136,6 +175,7 @@ export const useLayoutStore = create<LayoutStore>()(
       }
     ],
     currentWorkspaceId: 'default',
+    presetLayouts,
     popoutWindows: [],
 
     updateLayout: (layout) => {
@@ -214,6 +254,16 @@ export const useLayoutStore = create<LayoutStore>()(
         set(state => {
           state.layout = workspace.layout;
           state.currentWorkspaceId = workspaceId;
+        });
+      }
+    },
+
+    loadPresetLayout: (presetId) => {
+      const preset = presetLayouts.find(p => p.id === presetId);
+      if (preset) {
+        set(state => {
+          state.layout = preset.layout;
+          state.currentLayoutState = preset.layout;
         });
       }
     },
