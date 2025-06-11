@@ -1,25 +1,37 @@
-import React from 'react';
-import { Search, Filter, Grid3X3, List, Package, Tag } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, Filter, Grid3X3, List, Package } from 'lucide-react';
 import { usePartStore } from '../../stores/usePartStore';
-import { Part } from '../../types';
+import { Part, SearchFilters } from '../../types';
 
 const PartLibrary: React.FC = () => {
   const {
+    parts,
     filteredParts,
-    searchQuery,
-    selectedCategory,
-    selectedTags,
     loading,
     searchParts,
-    filterByCategory,
     clearFilters
   } = usePartStore();
 
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
-  const [showFilters, setShowFilters] = React.useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<SearchFilters>({});
 
-  const categories = Array.from(new Set(filteredParts.map(part => part.category)));
-  const allTags = Array.from(new Set(filteredParts.flatMap(part => part.tags)));
+  const categories = Array.from(new Set(parts.flatMap(p => p.metadata.categories)));
+  const manufacturers = Array.from(new Set(parts.map(p => p.metadata.manufacturer).filter(Boolean)));
+  const conditions = ['new', 'used', 'salvaged', 'broken'];
+
+  useEffect(() => {
+    searchParts(filters);
+  }, [filters, searchParts]);
+
+  const updateFilters = (updates: Partial<SearchFilters>) => {
+    setFilters(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleClear = () => {
+    setFilters({});
+    clearFilters();
+  };
 
   const getConditionColor = (condition: Part['condition']) => {
     switch (condition) {
@@ -162,8 +174,8 @@ const PartLibrary: React.FC = () => {
           <input
             type="text"
             placeholder="Search parts..."
-            value={searchQuery}
-            onChange={(e) => searchParts(e.target.value)}
+            value={filters.text || ''}
+            onChange={(e) => updateFilters({ text: e.target.value })}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -174,8 +186,8 @@ const PartLibrary: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <select
-                value={selectedCategory}
-                onChange={(e) => filterByCategory(e.target.value)}
+                value={filters.categories?.[0] || ''}
+                onChange={(e) => updateFilters({ categories: e.target.value ? [e.target.value] : undefined })}
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">All Categories</option>
@@ -185,9 +197,37 @@ const PartLibrary: React.FC = () => {
               </select>
             </div>
 
-            {(selectedCategory || selectedTags.length > 0) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+              <select
+                value={filters.manufacturer?.[0] || ''}
+                onChange={(e) => updateFilters({ manufacturer: e.target.value ? [e.target.value] : undefined })}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Manufacturers</option>
+                {manufacturers.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+              <select
+                value={filters.condition?.[0] || ''}
+                onChange={(e) => updateFilters({ condition: e.target.value ? [e.target.value] : undefined })}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Conditions</option>
+                {conditions.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            {Object.keys(filters).length > 0 && (
               <button
-                onClick={clearFilters}
+                onClick={handleClear}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
                 Clear Filters
