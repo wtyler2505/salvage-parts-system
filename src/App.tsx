@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Package, Eye, Settings, Layout, Save, Undo, Redo } from 'lucide-react';
+import { Package, Eye, Settings, Layout as LayoutIcon, Save, Undo, Redo } from 'lucide-react';
 import DockableLayout from './components/layout/DockableLayout';
 import PartLibraryPanel from './components/panels/PartLibraryPanel';
 import PropertyPanel from './components/panels/PropertyPanel';
@@ -11,12 +11,20 @@ import { initializeSampleData } from './lib/database';
 import { salvageDb } from './lib/salvageDatabase';
 import PartsManager from './components/parts/PartsManager';
 import EnhancedScene from './components/enhanced/EnhancedScene';
+import WorkspaceManager from './components/layout/WorkspaceManager';
+import { useLayoutStore } from './stores/useLayoutStore';
 
 function App() {
   const { loadParts } = usePartStore();
   const { loadParts: loadSalvageParts } = useSalvagePartStore();
   const { loadParts: loadSupabaseParts } = useSupabasePartStore();
   const [currentView, setCurrentView] = useState<'viewer' | 'parts'>('viewer');
+  const [showWorkspaceManager, setShowWorkspaceManager] = useState(false);
+  
+  const { 
+    saveWorkspace, 
+    setCurrentLayoutState 
+  } = useLayoutStore();
   
   // Register components with the layout manager
   const componentMap = new Map();
@@ -71,7 +79,7 @@ function App() {
       id: 'timeline-panel', 
       title: 'Timeline', 
       component: TimelinePanel,
-      icon: Layout,
+      icon: LayoutIcon,
       closable: true,
       resizable: true,
       minWidth: 250,
@@ -154,7 +162,7 @@ function App() {
   const navigationItems = [
     { id: 'parts', name: 'Parts Manager', icon: Package },
     { id: 'viewer', name: '3D Viewer', icon: Eye },
-    { id: 'layout', name: 'Layout', icon: Layout },
+    { id: 'layout', name: 'Layout', icon: LayoutIcon },
   ];
 
   return (
@@ -199,14 +207,33 @@ function App() {
               <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
                 <Redo className="w-4 h-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+              <button 
+                onClick={() => saveWorkspace()} 
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                title="Save current workspace"
+              >
                 <Save className="w-4 h-4" />
               </button>
             </div>
             
             <div className="h-6 w-px bg-gray-300"></div>
             
-            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+            <button 
+              onClick={() => setShowWorkspaceManager(!showWorkspaceManager)}
+              className={`p-2 rounded-lg ${
+                showWorkspaceManager 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+              title="Workspace Manager"
+            >
+              <LayoutIcon className="w-5 h-5" />
+            </button>
+            
+            <button 
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              title="Settings"
+            >
               <Settings className="w-5 h-5" />
             </button>
           </div>
@@ -215,11 +242,19 @@ function App() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden relative">
+        {/* Workspace Manager Sidebar */}
+        {showWorkspaceManager && (
+          <div className="absolute top-0 right-0 bottom-0 w-64 z-10 bg-white dark:bg-gray-800 shadow-lg border-l border-gray-200 dark:border-gray-700">
+            <WorkspaceManager />
+          </div>
+        )}
+        
         <DockableLayout 
           panels={panels}
           defaultLayout={layoutConfig}
           componentMap={componentMap}
           fallbackToCustomLayout={true}
+          onLayoutChange={setCurrentLayoutState}
         />
       </div>
     </div>

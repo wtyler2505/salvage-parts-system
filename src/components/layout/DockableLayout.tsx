@@ -20,13 +20,15 @@ interface DockableLayoutProps {
   defaultLayout?: any;
   componentMap?: Map<string, React.ComponentType<any>>;
   fallbackToCustomLayout?: boolean;
+  onLayoutChange?: (layout: any) => void;
 }
 
 const DockableLayout: React.FC<DockableLayoutProps> = ({ 
   panels, 
   defaultLayout,
   componentMap,
-  fallbackToCustomLayout = true
+  fallbackToCustomLayout = true,
+  onLayoutChange
 }) => {
   const {
     layout,
@@ -240,7 +242,10 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
           <GoldenLayoutWrapper 
             config={defaultLayout}
             componentMap={componentMap}
-            onLayoutChange={updateLayout}
+            onLayoutChange={(layout) => {
+              updateLayout(layout);
+              onLayoutChange?.(layout);
+            }}
           />
         ) : (
           <FallbackLayout />
