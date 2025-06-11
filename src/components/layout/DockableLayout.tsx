@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Monitor, Layout, Settings, Maximize2, Minimize2, X, MoreHorizontal } from 'lucide-react';
+import { Monitor, Layout as LayoutIcon, Settings, Maximize2, Minimize2, X, MoreHorizontal } from 'lucide-react';
 import { useLayoutStore } from '../../stores/useLayoutStore';
+import GoldenLayoutWrapper from './GoldenLayoutWrapper';
+import FallbackLayout from './FallbackLayout';
 
 interface Panel {
   id: string;
@@ -16,9 +18,14 @@ interface Panel {
 interface DockableLayoutProps {
   panels: Panel[];
   defaultLayout?: any;
+  fallbackToCustomLayout?: boolean;
 }
 
-const DockableLayout: React.FC<DockableLayoutProps> = ({ panels, defaultLayout }) => {
+const DockableLayout: React.FC<DockableLayoutProps> = ({ 
+  panels, 
+  defaultLayout,
+  fallbackToCustomLayout = true
+}) => {
   const {
     layout,
     theme,
@@ -35,6 +42,8 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({ panels, defaultLayout }
   const [draggedPanel, setDraggedPanel] = useState<string | null>(null);
   const [dropZones, setDropZones] = useState<any[]>([]);
   const [resizing, setResizing] = useState<{ panelId: string; direction: string } | null>(null);
+  const [useGoldenLayout, setUseGoldenLayout] = useState(true);
+  const [layoutError, setLayoutError] = useState<string | null>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,6 +125,14 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({ panels, defaultLayout }
     }
   };
 
+  const handleLayoutError = (error: string) => {
+    console.error('Layout error:', error);
+    setLayoutError(error);
+    if (fallbackToCustomLayout) {
+      setUseGoldenLayout(false);
+    }
+  };
+
   const PanelHeader: React.FC<{ panel: Panel; onPopout: () => void; onClose: () => void }> = ({ 
     panel, 
     onPopout, 
@@ -173,87 +190,58 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({ panels, defaultLayout }
   );
 
   return (
-    <div 
-      ref={layoutRef}
-      className={`h-full w-full ${theme === 'dark' ? 'dark' : ''} bg-white dark:bg-gray-900 text-gray-900 dark:text-white`}
-    >
-      {/* Workspace Tabs */}
+    <div className={`h-full w-full ${theme === 'dark' ? 'dark' : ''}`}>
       <div className="flex items-center space-x-1 p-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        {workspaces.map(workspace => (
-          <button
-            key={workspace.id}
-            onClick={() => loadWorkspace(workspace.id)}
-            className={`px-3 py-1 text-sm rounded ${
-              currentWorkspace === workspace.id
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            {workspace.name}
-          </button>
-        ))}
-        
-        <button
-          onClick={() => saveWorkspace(`workspace_${Date.now()}`)}
-          className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          Save Layout
-        </button>
-      </div>
-
-      {/* Main Layout Area */}
-      <div className="flex-1 relative">
-        {/* Render panels based on layout configuration */}
-        {panels.map(panel => {
-          const PanelComponent = panel.component;
-          return (
-            <div
-              key={panel.id}
-              className="absolute border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg"
-              style={{
-                // Position and size would be calculated from layout state
-                left: '10px',
-                top: '10px',
-                width: '300px',
-                height: '400px'
-              }}
+        <div className="flex items-center space-x-1 flex-1">
+          {workspaces.map(workspace => (
+            <button
+              key={workspace.id}
+              onClick={() => loadWorkspace(workspace.id)}
+              className={`px-3 py-1 text-sm rounded ${
+                currentWorkspace === workspace.id
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
             >
-              <PanelHeader
-                panel={panel}
-                onPopout={() => handlePopout(panel.id)}
-                onClose={() => {/* Handle close */}}
-              />
-              
-              <div className="flex-1 overflow-auto">
-                <PanelComponent />
-              </div>
-              
-              {panel.resizable && (
-                <>
-                  <ResizeHandle direction="right" onResize={() => setResizing({ panelId: panel.id, direction: 'right' })} />
-                  <ResizeHandle direction="bottom" onResize={() => setResizing({ panelId: panel.id, direction: 'bottom' })} />
-                </>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Drop Zones */}
-        {dropZones.map(zone => (
-          <div
-            key={zone.id}
-            className="absolute border-2 border-dashed border-blue-500 bg-blue-100 dark:bg-blue-900 opacity-50 pointer-events-auto"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleDrop(e, zone.id)}
-            style={{
-              // Position based on zone type and position
-              left: zone.position === 'left' ? '0' : zone.position === 'right' ? '70%' : '20%',
-              top: zone.position === 'top' ? '0' : zone.position === 'bottom' ? '70%' : '20%',
-              width: zone.position === 'left' || zone.position === 'right' ? '30%' : '60%',
-              height: zone.position === 'top' || zone.position === 'bottom' ? '30%' : '60%'
-            }}
+              {workspace.name}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => saveWorkspace(`workspace_${Date.now()}`)}
+            className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 flex items-center space-x-1"
+          >
+            <LayoutIcon className="w-3 h-3" />
+            <span>Save Layout</span>
+          </button>
+          
+          {fallbackToCustomLayout && (
+            <button
+              onClick={() => setUseGoldenLayout(!useGoldenLayout)}
+              className={`px-3 py-1 text-sm rounded flex items-center space-x-1 ${
+                useGoldenLayout 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <LayoutIcon className="w-3 h-3" />
+              <span>{useGoldenLayout ? 'Golden Layout' : 'Custom Layout'}</span>
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex-1 relative">
+        {useGoldenLayout && !layoutError ? (
+          <GoldenLayoutWrapper 
+            config={defaultLayout} 
+            onLayoutChange={updateLayout}
           />
-        ))}
+        ) : (
+          <FallbackLayout />
+        )}
       </div>
     </div>
   );

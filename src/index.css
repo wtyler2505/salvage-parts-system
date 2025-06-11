@@ -1,3 +1,68 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Golden Layout Overrides */
+.lm_goldenlayout {
+  background: #f9fafb;
+}
+
+.lm_content {
+  background: #ffffff;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.lm_header {
+  background: #f3f4f6;
+  height: 32px;
+}
+
+.lm_tab {
+  background: #e5e7eb;
+  color: #4b5563;
+  padding: 0 10px;
+  margin-right: 2px;
+  height: 28px;
+  line-height: 28px;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+.lm_tab.lm_active {
+  background: #ffffff;
+  color: #1f2937;
+  border-top: 2px solid #3b82f6;
+}
+
+.lm_close_tab {
+  top: 8px;
+  right: 6px;
+}
+
+.lm_controls {
+  top: 4px;
+  right: 4px;
+}
+
+.lm_splitter {
+  background: #e5e7eb;
+}
+
+.lm_splitter:hover, .lm_splitter.lm_dragging {
+  background: #3b82f6;
+}
+
+.lm_dragProxy .lm_content {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.lm_dropTargetIndicator {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  outline: 1px dashed #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.lm_dropTargetIndicator .lm_inner {
+  background: #3b82f6;
+}

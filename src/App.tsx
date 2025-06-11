@@ -1,19 +1,122 @@
-import React, { useEffect, useState } from 'react';
-import { Package, Eye, Settings } from 'lucide-react';
-import Scene from './components/viewer3d/Scene';
-import SpecificationsPanel from './components/ui/SpecificationsPanel';
-import ViewModeSelector from './components/ui/ViewModeSelector';
-import MeasurementTools from './components/ui/MeasurementTools';
-import PartsManager from './components/parts/PartsManager';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Package, Eye, Settings, Layout, Save, Undo, Redo } from 'lucide-react';
+import DockableLayout from './components/layout/DockableLayout';
 import { usePartStore } from './stores/usePartStore';
 import { useSalvagePartStore } from './stores/useSalvagePartStore';
+import { useSupabasePartStore } from './stores/useSupabasePartStore';
 import { initializeSampleData } from './lib/database';
 import { salvageDb } from './lib/salvageDatabase';
+import PartsManager from './components/parts/PartsManager';
+import EnhancedScene from './components/enhanced/EnhancedScene';
+import PropertyPanel from './components/panels/PropertyPanel';
+import PartLibraryPanel from './components/panels/PartLibraryPanel';
 
 function App() {
   const { loadParts } = usePartStore();
   const { loadParts: loadSalvageParts } = useSalvagePartStore();
-  const [currentView, setCurrentView] = useState<'viewer' | 'parts'>('parts');
+  const { loadParts: loadSupabaseParts } = useSupabasePartStore();
+  const [currentView, setCurrentView] = useState<'viewer' | 'parts'>('viewer');
+  
+  const panels = [
+    { 
+      id: 'parts-manager', 
+      title: 'Parts Manager', 
+      component: PartsManager,
+      icon: Package,
+      closable: false,
+      resizable: true,
+      minWidth: 300,
+      minHeight: 200
+    },
+    { 
+      id: 'enhanced-scene', 
+      title: '3D Viewer', 
+      component: EnhancedScene,
+      icon: Eye,
+      closable: false,
+      resizable: true,
+      minWidth: 400,
+      minHeight: 300
+    },
+    { 
+      id: 'property-panel', 
+      title: 'Properties', 
+      component: PropertyPanel,
+      icon: Settings,
+      closable: true,
+      resizable: true,
+      minWidth: 250,
+      minHeight: 200
+    },
+    { 
+      id: 'part-library', 
+      title: 'Part Library', 
+      component: PartLibraryPanel,
+      icon: Package,
+      closable: true,
+      resizable: true,
+      minWidth: 250,
+      minHeight: 200
+    }
+  ];
+  
+  const defaultLayout = {
+    type: 'row',
+    content: [
+      {
+        type: 'column',
+        width: 25,
+        content: [
+          {
+            type: 'stack',
+            content: [
+              {
+                type: 'component',
+                componentName: 'part-library',
+                title: 'Part Library',
+                isClosable: false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        type: 'column',
+        width: 50,
+        content: [
+          {
+            type: 'component',
+            componentName: 'enhanced-scene',
+            title: '3D Viewer',
+            isClosable: false
+          }
+        ]
+      },
+      {
+        type: 'column',
+        width: 25,
+        content: [
+          {
+            type: 'stack',
+            content: [
+              {
+                type: 'component',
+                componentName: 'property-panel',
+                title: 'Properties',
+                isClosable: false
+              },
+              {
+                type: 'component',
+                componentName: 'parts-manager',
+                title: 'Parts Manager',
+                isClosable: false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  };
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -24,17 +127,25 @@ function App() {
         
         // Initialize salvage parts data
         await loadSalvageParts();
+        
+        // Initialize Supabase parts data
+        try {
+          await loadSupabaseParts();
+        } catch (error) {
+          console.warn('Failed to load Supabase parts:', error);
+        }
       } catch (error) {
         console.error('Failed to initialize app:', error);
       }
     };
 
     initializeApp();
-  }, [loadParts, loadSalvageParts]);
-
+  }, [loadParts, loadSalvageParts, loadSupabaseParts]);
+  
   const navigationItems = [
     { id: 'parts', name: 'Parts Manager', icon: Package },
     { id: 'viewer', name: '3D Viewer', icon: Eye },
+    { id: 'layout', name: 'Layout', icon: Layout },
   ];
 
   return (
@@ -72,6 +183,20 @@ function App() {
           </div>
           
           <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1">
+              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                <Undo className="w-4 h-4" />
+              </button>
+              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                <Redo className="w-4 h-4" />
+              </button>
+              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                <Save className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="h-6 w-px bg-gray-300"></div>
+            
             <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
               <Settings className="w-5 h-5" />
             </button>
@@ -80,37 +205,12 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {currentView === 'parts' ? (
-          <PartsManager />
-        ) : (
-          <div className="h-full flex">
-            {/* Main Viewer Area */}
-            <div className="flex-1 relative">
-              <Scene />
-              
-              {/* Floating UI Controls */}
-              <ViewModeSelector />
-              <MeasurementTools />
-              
-              {/* Status Bar */}
-              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 px-4 py-2">
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span>WebGL</span>
-                  <span>•</span>
-                  <span>3D Salvage Parts Viewer</span>
-                  <span>•</span>
-                  <span className="text-green-600">Ready</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Specifications Panel */}
-            <div className="w-80 flex-shrink-0">
-              <SpecificationsPanel />
-            </div>
-          </div>
-        )}
+      <div className="flex-1 overflow-hidden relative">
+        <DockableLayout 
+          panels={panels}
+          defaultLayout={defaultLayout}
+          fallbackToCustomLayout={true}
+        />
       </div>
     </div>
   );
