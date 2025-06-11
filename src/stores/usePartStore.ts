@@ -813,7 +813,7 @@ function convertPartsToCsv(parts: Part[]): string {
 }
 
 // Map between our unified condition types and the legacy database condition types
-function mapCondition(dbCondition: string): 'new' | 'used' | 'salvaged' | 'broken' {
+export function mapCondition(dbCondition: string): 'new' | 'used' | 'salvaged' | 'broken' {
   switch (dbCondition) {
     case 'new': return 'new';
     case 'refurbished': return 'used';
@@ -823,7 +823,7 @@ function mapCondition(dbCondition: string): 'new' | 'used' | 'salvaged' | 'broke
   }
 }
 
-function mapConditionReverse(condition: string): string {
+export function mapConditionReverse(condition: string): string {
   switch (condition) {
     case 'new': return 'new';
     case 'used': return 'used';
