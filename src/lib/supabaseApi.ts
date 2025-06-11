@@ -2,7 +2,6 @@ import { supabase } from './supabaseClient'
 import type { Database } from './supabaseTypes'
 
 type Tables = Database['public']['Tables']
-type Part = Tables['parts']['Row']
 type PartInsert = Tables['parts']['Insert']
 type PartUpdate = Tables['parts']['Update']
 type Category = Tables['categories']['Row']
@@ -219,7 +218,7 @@ export const tagsApi = {
   },
 
   // Add tag to part
-  async addTopart(partId: string, tagId: string) {
+  async addToPart(partId: string, tagId: string) {
     const { error } = await supabase
       .from('part_tags')
       .insert({ part_id: partId, tag_id: tagId })
