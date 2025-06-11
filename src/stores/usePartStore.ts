@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { Part, SearchFilters, ImportResult } from '../types';
 import { db } from '../lib/database';
+import { mapCondition, mapConditionReverse } from './conditionMapping';
 
 interface PartStore {
   parts: Part[];
@@ -810,25 +811,4 @@ function convertPartsToCsv(parts: Part[]): string {
   return [headers, ...rows].map(row => 
     row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
   ).join('\n');
-}
-
-// Map between our unified condition types and the legacy database condition types
-function mapCondition(dbCondition: string): 'new' | 'used' | 'salvaged' | 'broken' {
-  switch (dbCondition) {
-    case 'new': return 'new';
-    case 'refurbished': return 'used';
-    case 'used': return 'used';
-    case 'damaged': return 'broken';
-    default: return 'used';
-  }
-}
-
-function mapConditionReverse(condition: string): string {
-  switch (condition) {
-    case 'new': return 'new';
-    case 'used': return 'used';
-    case 'salvaged': return 'used';
-    case 'broken': return 'damaged';
-    default: return 'used';
-  }
 }
