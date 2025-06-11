@@ -7,13 +7,40 @@ import { useViewerStore } from '../../stores/useViewerStore';
 import PartModel from './PartModel';
 import ViewportControls from './ViewportControls';
 import SelectionOutline from './SelectionOutline';
+import { AnnotationSystem } from '../collaboration/AnnotationSystem';
 
 const Scene: React.FC = () => {
   const {
     showGrid,
     simulationSettings,
-    cameraState
+    cameraState,
+    isAddingAnnotation,
+    addAnnotation,
+    setIsAddingAnnotation
   } = useViewerStore();
+
+  const handleSceneClick = (event: any) => {
+    if (!isAddingAnnotation) return;
+    
+    // Prevent event from propagating
+    event.stopPropagation();
+    
+    // Get intersection point
+    const intersects = event.intersections;
+    if (intersects.length > 0) {
+      const point = intersects[0].point.clone();
+      
+      // Add annotation at intersection point
+      addAnnotation({
+        position: point,
+        text: 'New annotation',
+        author: 'User'
+      });
+      
+      // Exit annotation mode
+      setIsAddingAnnotation(false);
+    }
+  };
 
   return (
     <div className="relative w-full h-full bg-gray-900">
@@ -60,7 +87,11 @@ const Scene: React.FC = () => {
           )}
 
           {/* Physics World */}
-          <Physics enabled={simulationSettings.physics.enabled} gravity={simulationSettings.physics.gravity}>
+          <Physics 
+            enabled={simulationSettings.physics.enabled} 
+            gravity={simulationSettings.physics.gravity}
+            onClick={handleSceneClick}
+          >
             {/* Sample Parts - In a real app, these would be loaded dynamically */}
             <PartModel 
               partId="engine-block-v8"
@@ -78,6 +109,9 @@ const Scene: React.FC = () => {
               scale={0.1}
             />
           </Physics>
+
+          {/* Annotation System */}
+          <AnnotationSystem />
 
           {/* Controls */}
           <OrbitControls

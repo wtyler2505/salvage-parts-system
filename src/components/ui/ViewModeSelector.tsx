@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Grid3X3, Scan, Maximize2, Settings } from 'lucide-react';
+import { Eye, Grid3X3, Scan, Maximize2, Settings, MessageSquare } from 'lucide-react';
 import { useViewerStore } from '../../stores/useViewerStore';
 
 const ViewModeSelector: React.FC = () => {
@@ -9,9 +9,11 @@ const ViewModeSelector: React.FC = () => {
     showWireframe,
     explodedView,
     explodeFactor,
+    isAddingAnnotation,
     setViewMode,
     toggleWireframe,
-    setExplodedView
+    setExplodedView,
+    setIsAddingAnnotation
   } = useViewerStore();
 
   const getIcon = (iconName: string) => {
@@ -51,6 +53,22 @@ const ViewModeSelector: React.FC = () => {
             </button>
           );
         })}
+        
+        {/* Separator */}
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+        
+        {/* Annotation Mode Toggle */}
+        <button
+          onClick={() => setIsAddingAnnotation(!isAddingAnnotation)}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            isAddingAnnotation
+              ? 'bg-blue-500 text-white'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          }`}
+          title="Add Annotation"
+        >
+          <MessageSquare className="w-5 h-5" />
+        </button>
         
         {/* Separator */}
         <div className="w-px h-6 bg-gray-300 mx-1" />

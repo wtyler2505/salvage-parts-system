@@ -8,6 +8,7 @@ import { usePartStore } from './stores/usePartStore';
 import { useSalvagePartStore } from './stores/useSalvagePartStore';
 import { useSupabasePartStore } from './stores/useSupabasePartStore';
 import SceneControlsPanel from './components/panels/SceneControlsPanel';
+import AnnotationPanel from './components/panels/AnnotationPanel';
 import { initializeSampleData } from './lib/database';
 import { salvageDb } from './lib/salvageDatabase';
 import PartsManager from './components/parts/PartsManager';
@@ -35,6 +36,7 @@ function App() {
   componentMap.set('PropertyPanel', PropertyPanel);
   componentMap.set('TimelinePanel', TimelinePanel);
   componentMap.set('SceneControlsPanel', SceneControlsPanel);
+  componentMap.set('AnnotationPanel', AnnotationPanel);
   
   const panels = [
     { 
@@ -96,6 +98,16 @@ function App() {
       resizable: true,
       minWidth: 250,
       minHeight: 200
+    },
+    { 
+      id: 'annotation-panel', 
+      title: 'Annotations', 
+      component: AnnotationPanel,
+      icon: MessageSquare,
+      closable: true,
+      resizable: true,
+      minWidth: 250,
+      minHeight: 200
     }
   ];
   
@@ -143,6 +155,10 @@ function App() {
               {
                 type: 'component',
                 componentName: 'TimelinePanel'
+              },
+              {
+                type: 'component',
+                componentName: 'AnnotationPanel'
               }
             ]
           }]

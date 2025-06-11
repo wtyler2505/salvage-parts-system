@@ -26,6 +26,8 @@ import PerformanceOverlay from '../performance/PerformanceOverlay';
 import KonamiCode from '../easter-eggs/KonamiCode';
 import AchievementSystem from '../achievements/AchievementSystem';
 import PartTetris from '../mini-games/PartTetris';
+import AnnotationControlPanel from '../ui/AnnotationControlPanel';
+import { AnnotationSystem } from '../collaboration/AnnotationSystem';
 
 // Import enhanced components
 import { useViewerStore } from '../../stores/useViewerStore';
@@ -104,6 +106,8 @@ const SceneContent: React.FC<{
 }> = ({ performanceManager, enableEffects, useSSAO }) => {
   const { showGrid, simulationSettings } = useViewerStore();
   const { parts } = useSalvagePartStore();
+  const { isAddingAnnotation, addAnnotation, setIsAddingAnnotation } = useViewerStore();
+  const { scene, camera, raycaster, pointer } = useThree();
   
   useFrame((state) => {
     if (performanceManager) {
@@ -112,9 +116,34 @@ const SceneContent: React.FC<{
       // performanceManager.update would be called here
     }
   });
+  
+  const handleClick = (event: THREE.Event) => {
+    if (!isAddingAnnotation) return;
+    
+    // Prevent event from propagating to parent elements
+    event.stopPropagation();
+    
+    // Use raycaster to find intersection with objects in the scene
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    if (intersects.length > 0) {
+      const point = intersects[0].point.clone();
+      
+      // Add annotation at intersection point
+      addAnnotation({
+        position: point,
+        text: 'New annotation',
+        author: 'User',
+      });
+      
+      // Exit annotation mode
+      setIsAddingAnnotation(false);
+    }
+  };
 
   return (
-    <>
+    <group onClick={handleClick}>
       {/* Lighting setup */}
       <ambientLight intensity={0.4} />
       <directionalLight
@@ -174,6 +203,9 @@ const SceneContent: React.FC<{
         <meshStandardMaterial color="#4ecdc4" />
       </mesh>
       
+      {/* Annotation System */}
+      <AnnotationSystem />
+      
       {/* Ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
         <planeGeometry args={[20, 20]} />
@@ -185,7 +217,7 @@ const SceneContent: React.FC<{
       
       {/* Performance stats */}
       <Stats />
-    </>
+    </group>
   );
 };
 
@@ -380,6 +412,9 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
           <Preload all />
         </Suspense>
       </Canvas>
+
+      {/* Annotation Controls */}
+      <AnnotationControlPanel />
 
       {/* Performance Overlay */}
       {performanceManager && (

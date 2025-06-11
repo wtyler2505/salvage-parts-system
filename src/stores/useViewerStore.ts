@@ -1,6 +1,16 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { CameraState, SelectionState, ViewMode, SimulationSettings, LODSettings } from '../types';
+import * as THREE from 'three';
+
+interface Annotation {
+  id: string;
+  position: THREE.Vector3;
+  text: string;
+  author?: string;
+  createdAt: Date;
+  color?: string;
+}
 
 interface ViewerStore {
   cameraState: CameraState;
@@ -14,6 +24,8 @@ interface ViewerStore {
   showWireframe: boolean;
   explodedView: boolean;
   explodeFactor: number;
+  annotations: Annotation[];
+  isAddingAnnotation: boolean;
   
   // Actions
   setCameraState: (state: Partial<CameraState>) => void;
@@ -27,6 +39,10 @@ interface ViewerStore {
   toggleGrid: () => void;
   toggleWireframe: () => void;
   setExplodedView: (enabled: boolean, factor?: number) => void;
+  addAnnotation: (annotation: Omit<Annotation, 'id' | 'createdAt'>) => void;
+  updateAnnotation: (id: string, text: string) => void;
+  deleteAnnotation: (id: string) => void;
+  setIsAddingAnnotation: (isAdding: boolean) => void;
 }
 
 export const useViewerStore = create<ViewerStore>()(
@@ -75,6 +91,8 @@ export const useViewerStore = create<ViewerStore>()(
     showWireframe: false,
     explodedView: false,
     explodeFactor: 1.5,
+    annotations: [],
+    isAddingAnnotation: false,
 
     setCameraState: (state) => {
       set(draft => {
@@ -152,6 +170,38 @@ export const useViewerStore = create<ViewerStore>()(
       set(draft => {
         draft.explodedView = enabled;
         draft.explodeFactor = factor;
+      });
+    },
+    
+    addAnnotation: (annotation) => {
+      set(draft => {
+        draft.annotations.push({
+          ...annotation,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          color: annotation.color || '#3B82F6'
+        });
+      });
+    },
+    
+    updateAnnotation: (id, text) => {
+      set(draft => {
+        const annotation = draft.annotations.find(a => a.id === id);
+        if (annotation) {
+          annotation.text = text;
+        }
+      });
+    },
+    
+    deleteAnnotation: (id) => {
+      set(draft => {
+        draft.annotations = draft.annotations.filter(a => a.id !== id);
+      });
+    },
+    
+    setIsAddingAnnotation: (isAdding) => {
+      set(draft => {
+        draft.isAddingAnnotation = isAdding;
       });
     }
   }))

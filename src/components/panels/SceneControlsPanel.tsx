@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Eye, Layers, Maximize, Sparkles, Zap } from 'lucide-react';
+import { Grid, Eye, Layers, Maximize, Sparkles, Zap, MessageSquare } from 'lucide-react';
 import { useViewerStore } from '../../stores/useViewerStore';
 
 const SceneControlsPanel = () => {
@@ -8,9 +8,11 @@ const SceneControlsPanel = () => {
     showWireframe, 
     explodedView, 
     explodeFactor,
+    isAddingAnnotation,
     toggleGrid, 
     toggleWireframe, 
-    setExplodedView 
+    setExplodedView,
+    setIsAddingAnnotation
   } = useViewerStore();
 
   const handleExplodeFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +119,41 @@ const SceneControlsPanel = () => {
                   <span>1</span>
                   <span>2</span>
                 </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Divider */}
+        <div className="border-t border-gray-200 dark:border-gray-700"></div>
+        
+        {/* Annotations */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+            <MessageSquare className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+            Annotations
+          </h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Add Annotation Mode</span>
+              <button
+                onClick={() => setIsAddingAnnotation(!isAddingAnnotation)}
+                className={`relative inline-flex h-5 w-10 items-center rounded-full ${
+                  isAddingAnnotation ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                    isAddingAnnotation ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            
+            {isAddingAnnotation && (
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-800 dark:text-blue-300">
+                Click anywhere on the 3D model to place an annotation
               </div>
             )}
           </div>
