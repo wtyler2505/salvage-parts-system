@@ -8,6 +8,7 @@ import PartLibraryPanel from '../panels/PartLibraryPanel';
 
 interface GoldenLayoutWrapperProps {
   config?: LayoutConfig;
+  componentMap?: Map<string, React.ComponentType<any>>;
   onLayoutChange?: (config: LayoutConfig) => void;
 }
 
@@ -74,6 +75,7 @@ const defaultConfig: LayoutConfig = {
 
 const GoldenLayoutWrapper: React.FC<GoldenLayoutWrapperProps> = ({
   config = defaultConfig,
+  componentMap,
   onLayoutChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -89,7 +91,14 @@ const GoldenLayoutWrapper: React.FC<GoldenLayoutWrapperProps> = ({
       const layout = new GoldenLayout(config, containerRef.current);
 
       // Register components
-      Object.entries(componentRegistry).forEach(([name, Component]) => {
+      const componentsToRegister = componentMap || componentRegistry;
+      
+      // If using componentMap, convert it to entries for registration
+      const entries = componentMap 
+        ? Array.from(componentMap.entries()) 
+        : Object.entries(componentRegistry);
+      
+      entries.forEach(([name, Component]) => {
         layout.registerComponentFactoryFunction(name, (container: ComponentContainer) => {
           const element = document.createElement('div');
           element.style.width = '100%';

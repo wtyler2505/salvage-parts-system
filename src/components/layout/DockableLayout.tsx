@@ -18,12 +18,14 @@ interface Panel {
 interface DockableLayoutProps {
   panels: Panel[];
   defaultLayout?: any;
+  componentMap?: Map<string, React.ComponentType<any>>;
   fallbackToCustomLayout?: boolean;
 }
 
 const DockableLayout: React.FC<DockableLayoutProps> = ({ 
   panels, 
   defaultLayout,
+  componentMap,
   fallbackToCustomLayout = true
 }) => {
   const {
@@ -236,7 +238,8 @@ const DockableLayout: React.FC<DockableLayoutProps> = ({
       <div className="flex-1 relative">
         {useGoldenLayout && !layoutError ? (
           <GoldenLayoutWrapper 
-            config={defaultLayout} 
+            config={defaultLayout}
+            componentMap={componentMap}
             onLayoutChange={updateLayout}
           />
         ) : (

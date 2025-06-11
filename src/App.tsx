@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Package, Eye, Settings, Layout, Save, Undo, Redo } from 'lucide-react';
 import DockableLayout from './components/layout/DockableLayout';
+import PartLibraryPanel from './components/panels/PartLibraryPanel';
+import PropertyPanel from './components/panels/PropertyPanel';
+import TimelinePanel from './components/timeline/TimelinePanel';
 import { usePartStore } from './stores/usePartStore';
 import { useSalvagePartStore } from './stores/useSalvagePartStore';
 import { useSupabasePartStore } from './stores/useSupabasePartStore';
@@ -8,14 +11,20 @@ import { initializeSampleData } from './lib/database';
 import { salvageDb } from './lib/salvageDatabase';
 import PartsManager from './components/parts/PartsManager';
 import EnhancedScene from './components/enhanced/EnhancedScene';
-import PropertyPanel from './components/panels/PropertyPanel';
-import PartLibraryPanel from './components/panels/PartLibraryPanel';
 
 function App() {
   const { loadParts } = usePartStore();
   const { loadParts: loadSalvageParts } = useSalvagePartStore();
   const { loadParts: loadSupabaseParts } = useSupabasePartStore();
   const [currentView, setCurrentView] = useState<'viewer' | 'parts'>('viewer');
+  
+  // Register components with the layout manager
+  const componentMap = new Map();
+  componentMap.set('PartsManager', PartsManager);
+  componentMap.set('EnhancedScene', EnhancedScene);
+  componentMap.set('PartLibraryPanel', PartLibraryPanel);
+  componentMap.set('PropertyPanel', PropertyPanel);
+  componentMap.set('TimelinePanel', TimelinePanel);
   
   const panels = [
     { 
@@ -57,65 +66,65 @@ function App() {
       resizable: true,
       minWidth: 250,
       minHeight: 200
+    },
+    { 
+      id: 'timeline-panel', 
+      title: 'Timeline', 
+      component: TimelinePanel,
+      icon: Layout,
+      closable: true,
+      resizable: true,
+      minWidth: 250,
+      minHeight: 200
     }
   ];
   
-  const defaultLayout = {
-    type: 'row',
-    content: [
-      {
-        type: 'column',
-        width: 25,
-        content: [
-          {
+  // Define the three-column workspace layout configuration
+  const layoutConfig = {
+    root: {
+      type: 'row',
+      content: [
+        {
+          type: 'column',
+          width: 20,
+          content: [{
+            type: 'stack',
+            content: [{
+              type: 'component',
+              componentName: 'PartLibraryPanel'
+            }]
+          }]
+        },
+        {
+          type: 'column',
+          width: 60,
+          content: [{
+            type: 'stack',
+            content: [{
+              type: 'component',
+              componentName: 'EnhancedScene'
+            }]
+          }]
+        },
+        {
+          type: 'column',
+          width: 20,
+          content: [{
             type: 'stack',
             content: [
               {
                 type: 'component',
-                componentName: 'part-library',
-                title: 'Part Library',
-                isClosable: false
-              }
-            ]
-          }
-        ]
-      },
-      {
-        type: 'column',
-        width: 50,
-        content: [
-          {
-            type: 'component',
-            componentName: 'enhanced-scene',
-            title: '3D Viewer',
-            isClosable: false
-          }
-        ]
-      },
-      {
-        type: 'column',
-        width: 25,
-        content: [
-          {
-            type: 'stack',
-            content: [
-              {
-                type: 'component',
-                componentName: 'property-panel',
-                title: 'Properties',
-                isClosable: false
+                componentName: 'PropertyPanel'
               },
               {
                 type: 'component',
-                componentName: 'parts-manager',
-                title: 'Parts Manager',
-                isClosable: false
+                componentName: 'TimelinePanel'
               }
             ]
-          }
-        ]
-      }
-    ]
+          }]
+        }
+      ]
+    }
   };
 
   useEffect(() => {
@@ -208,7 +217,8 @@ function App() {
       <div className="flex-1 overflow-hidden relative">
         <DockableLayout 
           panels={panels}
-          defaultLayout={defaultLayout}
+          defaultLayout={layoutConfig}
+          componentMap={componentMap}
           fallbackToCustomLayout={true}
         />
       </div>
