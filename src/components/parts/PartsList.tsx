@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { Grid3X3, List, Edit, Eye, Trash2, Copy, Package, MoreVertical } from 'lucide-react';
-import { SalvagePart } from '../../types/salvagePart';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { Part } from '../../types';
+import { usePartStore } from '../../stores/usePartStore';
 import PartEditor from './PartEditor';
 
 interface PartsListProps {
-  parts: SalvagePart[];
+  parts: Part[];
 }
 
 const PartsList: React.FC<PartsListProps> = ({ parts }) => {
-  const { deletePart, duplicatePart, setSelectedPart } = useSalvagePartStore();
+  const { deletePart, duplicatePart, setSelectedPart } = usePartStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedParts, setSelectedParts] = useState<string[]>([]);
   const [editorState, setEditorState] = useState<{
     isOpen: boolean;
-    part?: SalvagePart;
+    part?: Part;
     mode: 'create' | 'edit' | 'view';
   }>({ isOpen: false, mode: 'create' });
 
@@ -30,11 +30,11 @@ const PartsList: React.FC<PartsListProps> = ({ parts }) => {
     }
   };
 
-  const handleEditPart = (part: SalvagePart) => {
+  const handleEditPart = (part: Part) => {
     setEditorState({ isOpen: true, part, mode: 'edit' });
   };
 
-  const handleViewPart = (part: SalvagePart) => {
+  const handleViewPart = (part: Part) => {
     setEditorState({ isOpen: true, part, mode: 'view' });
     setSelectedPart(part);
   };
@@ -49,7 +49,7 @@ const PartsList: React.FC<PartsListProps> = ({ parts }) => {
     await duplicatePart(partId);
   };
 
-  const getConditionColor = (condition: SalvagePart['metadata']['condition']) => {
+  const getConditionColor = (condition: Part['metadata']['condition']) => {
     switch (condition) {
       case 'new': return 'bg-green-100 text-green-800';
       case 'used': return 'bg-blue-100 text-blue-800';
@@ -59,7 +59,7 @@ const PartsList: React.FC<PartsListProps> = ({ parts }) => {
     }
   };
 
-  const PartCard: React.FC<{ part: SalvagePart }> = ({ part }) => {
+  const PartCard: React.FC<{ part: Part }> = ({ part }) => {
     const [showMenu, setShowMenu] = useState(false);
     const isSelected = selectedParts.includes(part.id);
 
@@ -185,7 +185,7 @@ const PartsList: React.FC<PartsListProps> = ({ parts }) => {
     );
   };
 
-  const PartListItem: React.FC<{ part: SalvagePart }> = ({ part }) => {
+  const PartListItem: React.FC<{ part: Part }> = ({ part }) => {
     const isSelected = selectedParts.includes(part.id);
 
     return (

@@ -5,7 +5,7 @@ import { Box, Sphere, Cylinder, useGLTF } from '@react-three/drei';
 import { RigidBody, CuboidCollider, BallCollider, CylinderCollider } from '@react-three/rapier';
 import { Mesh, Vector3, Euler, Quaternion } from 'three';
 import { useViewerStore } from '../../stores/useViewerStore';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { usePartStore } from '../../stores/usePartStore';
 
 interface PartModelProps {
   partId: string;
@@ -41,7 +41,7 @@ const PartModel: React.FC<PartModelProps> = ({
     hoverPart,
     simulationSettings
   } = useViewerStore();
-  const { parts } = useSalvagePartStore();
+  const { parts } = usePartStore();
 
   const isSelected = selectionState.selectedParts.includes(partId);
   const isHovered = selectionState.hoveredPart === partId;

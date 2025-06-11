@@ -5,7 +5,6 @@ import PartLibraryPanel from './components/panels/PartLibraryPanel';
 import PropertyPanel from './components/panels/PropertyPanel';
 import TimelinePanel from './components/timeline/TimelinePanel';
 import { usePartStore } from './stores/usePartStore';
-import { useSalvagePartStore } from './stores/useSalvagePartStore';
 import { useSupabasePartStore } from './stores/useSupabasePartStore';
 import SceneControlsPanel from './components/panels/SceneControlsPanel';
 import AnnotationPanel from './components/panels/AnnotationPanel';
@@ -18,7 +17,6 @@ import { useLayoutStore } from './stores/useLayoutStore';
 
 function App() {
   const { loadParts } = usePartStore();
-  const { loadParts: loadSalvageParts } = useSalvagePartStore();
   const { loadParts: loadSupabaseParts } = useSupabasePartStore();
   const [currentView, setCurrentView] = useState<'viewer' | 'parts'>('viewer');
   const [showWorkspaceManager, setShowWorkspaceManager] = useState(false);
@@ -174,9 +172,6 @@ function App() {
         await initializeSampleData();
         await loadParts();
         
-        // Initialize salvage parts data
-        await loadSalvageParts();
-        
         // Initialize Supabase parts data
         try {
           await loadSupabaseParts();
@@ -189,7 +184,7 @@ function App() {
     };
 
     initializeApp();
-  }, [loadParts, loadSalvageParts, loadSupabaseParts]);
+  }, [loadParts, loadSupabaseParts]);
   
   const navigationItems = [
     { id: 'parts', name: 'Parts Manager', icon: Package },

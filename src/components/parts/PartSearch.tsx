@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, X, Calendar, DollarSign, Mic, QrCode, Download, Upload } from 'lucide-react';
-import { SearchFilters } from '../../types/salvagePart';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { SearchFilters } from '../../types';
+import { usePartStore } from '../../stores/usePartStore';
 
 interface PartSearchProps {
   onFiltersChange: (filters: SearchFilters) => void;
 }
 
 const PartSearch: React.FC<PartSearchProps> = ({ onFiltersChange }) => {
-  const { parts, searchParts, exportParts, importParts } = useSalvagePartStore();
+  const { parts, searchParts, exportParts, importParts } = usePartStore();
   const [filters, setFilters] = useState<SearchFilters>({});
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isListening, setIsListening] = useState(false);

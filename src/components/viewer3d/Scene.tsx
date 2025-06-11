@@ -4,7 +4,7 @@ import { OrbitControls, Grid, Environment, Stats, Plane } from '@react-three/dre
 import { Physics, Debug } from '@react-three/rapier';
 import { EffectComposer, Bloom, SSAO } from '@react-three/postprocessing';
 import { useViewerStore } from '../../stores/useViewerStore';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { usePartStore } from '../../stores/usePartStore';
 import PartModel from './PartModel';
 import ViewportControls from './ViewportControls';
 import SelectionOutline from './SelectionOutline';
@@ -21,7 +21,7 @@ const Scene: React.FC = () => {
     setIsAddingAnnotation,
     showMeasurements
   } = useViewerStore();
-  const { parts } = useSalvagePartStore();
+  const { parts } = usePartStore();
 
   const handleSceneClick = (event: any) => {
     if (!isAddingAnnotation) return;

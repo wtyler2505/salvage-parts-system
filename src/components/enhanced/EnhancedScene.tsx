@@ -32,7 +32,7 @@ import { AnnotationSystem } from '../collaboration/AnnotationSystem';
 
 // Import enhanced components
 import { useViewerStore } from '../../stores/useViewerStore';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { usePartStore } from '../../stores/usePartStore';
 
 interface EnhancedSceneProps {
   enablePerformanceOptimizations?: boolean;
@@ -246,7 +246,7 @@ const EnhancedScene: React.FC<EnhancedSceneProps> = ({
   enableEasterEggs = true,
   enableAchievements = true
 }) => {
-  const { parts } = useSalvagePartStore();
+  const { parts } = usePartStore();
   
   // Performance systems
   const [performanceManager, setPerformanceManager] = useState<PerformanceManager | null>(null);

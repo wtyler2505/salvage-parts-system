@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, BarChart3, Settings, RefreshCw } from 'lucide-react';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
-import { SearchFilters } from '../../types/salvagePart';
+import { usePartStore } from '../../stores/usePartStore';
+import { SearchFilters } from '../../types';
 import PartSearch from './PartSearch';
 import PartsList from './PartsList';
 import PartEditor from './PartEditor';
@@ -15,7 +15,7 @@ const PartsManager: React.FC = () => {
     loadParts, 
     loadStatistics,
     searchParts 
-  } = useSalvagePartStore();
+  } = usePartStore();
   
   const [showEditor, setShowEditor] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);

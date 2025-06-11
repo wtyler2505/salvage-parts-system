@@ -15,13 +15,13 @@ import {
   Wrench,
   Magnet
 } from 'lucide-react';
-import { SalvagePart } from '../../types/salvagePart';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { Part } from '../../types';
+import { usePartStore } from '../../stores/usePartStore';
 import { useViewerStore } from '../../stores/useViewerStore';
 
 interface PropertyPanelProps {
-  part: SalvagePart | null;
-  onPartUpdate?: (updates: Partial<SalvagePart>) => void;
+  part: Part | null;
+  onPartUpdate?: (updates: Partial<Part>) => void;
 }
 
 interface Section {
@@ -33,7 +33,7 @@ interface Section {
 }
 
 const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => {
-  const { updatePart } = useSalvagePartStore();
+  const { updatePart } = usePartStore();
   const { simulationSettings, updateSimulationSettings } = useViewerStore();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['general']));
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -96,7 +96,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({ part, onPartUpdate }) => 
     if (!part) return;
 
     const value = localValues[fieldId];
-    const updates: Partial<SalvagePart> = {};
+    const updates: Partial<Part> = {};
 
     console.log(`Saving field ${fieldId} with value ${value}`);
     // Map field to part structure

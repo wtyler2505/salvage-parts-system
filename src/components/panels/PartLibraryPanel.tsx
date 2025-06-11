@@ -14,7 +14,7 @@ import {
   Heart,
   Download
 } from 'lucide-react';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { usePartStore } from '../../stores/usePartStore';
 import { useViewerStore } from '../../stores/useViewerStore';
 
 interface PartLibraryPanelProps {
@@ -23,7 +23,7 @@ interface PartLibraryPanelProps {
 }
 
 const PartLibraryPanel: React.FC<PartLibraryPanelProps> = ({ onPartSelect, onPartDrag }) => {
-  const { parts, filteredParts, searchParts, loadParts } = useSalvagePartStore();
+  const { parts, filteredParts, searchParts, loadParts } = usePartStore();
   const { selectPart } = useViewerStore();
   
   const [viewMode, setViewMode] = useState<'tree' | 'grid' | 'list'>('grid');

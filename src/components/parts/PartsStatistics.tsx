@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, TrendingUp, Package, DollarSign, PieChart } from 'lucide-react';
-import { useSalvagePartStore } from '../../stores/useSalvagePartStore';
+import { usePartStore } from '../../stores/usePartStore';
 
 interface PartsStatisticsProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ interface PartsStatisticsProps {
 }
 
 const PartsStatistics: React.FC<PartsStatisticsProps> = ({ isOpen, onClose }) => {
-  const { statistics, loadStatistics } = useSalvagePartStore();
+  const { statistics, loadStatistics } = usePartStore();
 
   useEffect(() => {
     if (isOpen && !statistics) {
