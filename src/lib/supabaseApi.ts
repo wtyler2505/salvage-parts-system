@@ -2,9 +2,9 @@ import { supabase } from './supabaseClient'
 import type { Database } from './supabaseTypes'
 
 type Tables = Database['public']['Tables']
-type Part = Tables['parts']['Row']
-type PartInsert = Tables['parts']['Insert']
-type PartUpdate = Tables['parts']['Update']
+export type SupabasePart = Tables['parts']['Row']
+export type SupabasePartInsert = Tables['parts']['Insert']
+export type SupabasePartUpdate = Tables['parts']['Update']
 type Category = Tables['categories']['Row']
 type Manufacturer = Tables['manufacturers']['Row']
 type Location = Tables['locations']['Row']
@@ -70,7 +70,7 @@ export const partsApi = {
   },
 
   // Create new part
-  async create(part: PartInsert) {
+  async create(part: SupabasePartInsert) {
     const { data, error } = await supabase
       .from('parts')
       .insert(part)
@@ -82,7 +82,7 @@ export const partsApi = {
   },
 
   // Update part
-  async update(id: string, updates: PartUpdate) {
+  async update(id: string, updates: SupabasePartUpdate) {
     const { data, error } = await supabase
       .from('parts')
       .update(updates)
