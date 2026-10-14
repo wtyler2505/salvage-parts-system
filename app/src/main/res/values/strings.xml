@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Salvage Parts System</string>
+    <string name="nav_parts_manager">Parts</string>
+    <string name="nav_viewer_3d">3D Viewer</string>
+    <string name="nav_statistics">Statistics</string>
+    <string name="nav_inspector">Inspector</string>
+    <string name="header_subtitle">3D CAD &amp; Salvage Inventory</string>
+    <string name="search_parts_hint">Search name, model, OEM#, or tags…</string>
+    <string name="action_add_part">Add Part</string>
+    <string name="action_edit_part">Edit Part</string>
+    <string name="action_duplicate_part">Duplicate Part</string>
+    <string name="action_delete_part">Delete Part</string>
+    <string name="action_view_3d">Inspect in 3D</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_redo">Redo</string>
+    <string name="action_save_workspace">Save Workspace</string>
+    <string name="empty_parts_title">No matching salvage parts</string>
+    <string name="empty_parts_subtitle">Adjust your search filters or add a new component to your inventory.</string>
+    <string name="condition_new">New</string>
+    <string name="condition_used">Used</string>
+    <string name="condition_salvaged">Salvaged</string>
+    <string name="condition_broken">Broken</string>
+    <string name="stats_total_parts">Total Parts</string>
+    <string name="stats_total_value">Total Value</string>
+    <string name="stats_categories">Categories</string>
+    <string name="stats_avg_value">Avg. Value</string>
+    <string name="viewer_mode_normal">Normal</string>
+    <string name="viewer_mode_wireframe">Wireframe</string>
+    <string name="viewer_mode_xray">X-Ray</string>
+    <string name="viewer_mode_exploded">Exploded</string>
+    <string name="sim_physics">Physics</string>
+    <string name="sim_electrical">Electrical</string>
+    <string name="sim_thermal">Thermal</string>
+    <string name="annotations_title">3D Annotations</string>
+    <string name="measurements_title">3D Point-to-Point Measurements</string>
+</resources>
